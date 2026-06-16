@@ -1,0 +1,67 @@
+import yaml from 'js-yaml';
+import { TEMPLATES } from './templates.js';
+
+// Build the alerter-specific block of an ElastAlert2 rule.
+// `defaultWebhook` is the admin-configured webhook for the alerter type;
+// the developer may override it via alerterConfig.webhookOverride.
+function buildAlerterBlock(alerter, cfg = {}, defaultWebhook) {
+  const block = { alert: [alerter] };
+  const webhook = cfg.webhookOverride || defaultWebhook;
+
+  if (alerter === 'mattermost') {
+    if (webhook) block.mattermost_webhook_url = webhook;
+    if (cfg.channelOverride) block.mattermost_channel_override = cfg.channelOverride;
+    if (cfg.usernameOverride) block.mattermost_username_override = cfg.usernameOverride;
+    if (cfg.msgColor) block.mattermost_msg_color = cfg.msgColor; // good|warning|danger|#HEX
+  } else if (alerter === 'slack') {
+    if (webhook) block.slack_webhook_url = webhook;
+    if (cfg.channelOverride) block.slack_channel_override = cfg.channelOverride;
+    if (cfg.usernameOverride) block.slack_username_override = cfg.usernameOverride;
+    if (cfg.msgColor) block.slack_msg_color = cfg.msgColor;
+  }
+  return block;
+}
+
+// Turn a DB rule record into an ElastAlert2 rule object (then YAML string).
+// `defaultWebhook` = WebhookSetting.webhookUrl for the rule's alerter type.
+export function renderRuleObject(rule, defaultWebhook) {
+  // Custom rules: the user owns the full body. We only enforce `name` so the
+  // platform can still map the file back to the DB record.
+  if (rule.template === 'CUSTOM') {
+    const parsed = rule.rawYaml ? yaml.load(rule.rawYaml) : {};
+    return { ...(parsed || {}), name: rule.name };
+  }
+
+  const tpl = TEMPLATES[rule.template];
+  if (!tpl) throw new Error(`Unknown template: ${rule.template}`);
+
+  const base = {
+    name: rule.name,
+    index: rule.esIndex,
+    ...tpl.build(rule.params || {}),
+    ...buildAlerterBlock(rule.alerter, rule.alerterConfig || {}, defaultWebhook),
+  };
+  return base;
+}
+
+export function renderRuleYaml(rule, defaultWebhook) {
+  const obj = renderRuleObject(rule, defaultWebhook);
+  return yaml.dump(obj, { lineWidth: 120, noRefs: true });
+}
+
+// Validate that custom YAML at least parses and has the minimum required fields.
+export function validateCustomYaml(rawYaml) {
+  let parsed;
+  try {
+    parsed = yaml.load(rawYaml);
+  } catch (e) {
+    return { ok: false, error: `YAML parse error: ${e.message}` };
+  }
+  if (!parsed || typeof parsed !== 'object') {
+    return { ok: false, error: 'YAML must define a mapping' };
+  }
+  if (!parsed.type) return { ok: false, error: 'Missing required field: type' };
+  if (!parsed.index) return { ok: false, error: 'Missing required field: index' };
+  if (!parsed.alert) return { ok: false, error: 'Missing required field: alert' };
+  return { ok: true };
+}

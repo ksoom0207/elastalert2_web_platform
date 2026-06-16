@@ -1,0 +1,85 @@
+// Prisma schema for the ElastAlert2 web platform.
+// Stores rule metadata + alerter config in PostgreSQL.
+// Active rules are rendered to YAML files in the shared rules_folder.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Mirror of the Keycloak identity, kept for ownership / audit references.
+model User {
+  id        String   @id @default(cuid())
+  subject   String   @unique // Keycloak `sub` claim
+  email     String?
+  username  String?
+  createdAt DateTime @default(now())
+
+  rules     Rule[]
+  audits    AuditLog[]
+}
+
+enum TemplateType {
+  K8S_ERROR
+  APM_500
+  SERVER_METRIC
+  CUSTOM
+}
+
+enum AlerterType {
+  slack
+  mattermost
+}
+
+model Rule {
+  id          String       @id @default(cuid())
+  name        String       @unique // also used as the YAML filename / ElastAlert rule name
+  description String?
+  template    TemplateType
+  enabled     Boolean      @default(false)
+
+  // Common Elasticsearch settings (developer may override the index).
+  esIndex     String
+
+  // Form-driven template variables (threshold, timeframe, filters, ...).
+  params      Json         @default("{}")
+
+  // Alerter selection + override options (channel, username, msg color, webhook override).
+  alerter     AlerterType
+  alerterConfig Json       @default("{}")
+
+  // For TemplateType.CUSTOM: a raw YAML body the user fully controls.
+  rawYaml     String?
+
+  ownerId     String
+  owner       User         @relation(fields: [ownerId], references: [id])
+
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  audits      AuditLog[]
+}
+
+// Default webhook endpoints managed by an admin (e.g. mattermost infra webhook).
+model WebhookSetting {
+  id         String      @id @default(cuid())
+  type       AlerterType @unique
+  webhookUrl String
+  updatedBy  String?
+  updatedAt  DateTime    @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  ruleId    String?
+  rule      Rule?    @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  action    String   // CREATE | UPDATE | DELETE | ENABLE | DISABLE | TEST
+  detail    Json     @default("{}")
+  createdAt DateTime @default(now())
+}

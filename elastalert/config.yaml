@@ -1,0 +1,27 @@
+# Admin-managed base ElastAlert2 configuration.
+# Developers never edit this file — they only manage rules via the web platform.
+
+# Folder of rule YAMLs, rendered by the web backend (shared Docker volume).
+rules_folder: /opt/elastalert/rules
+
+# How often ElastAlert2 rescans rules_folder and runs each rule.
+# Rule add/edit/enable/disable from the web app is reflected on this cadence.
+run_every:
+  minutes: 1
+
+buffer_time:
+  minutes: 15
+
+# --- Elasticsearch connection (edit for your cluster) ---
+es_host: elasticsearch
+es_port: 9200
+# es_username: elastic
+# es_password: changeme
+# use_ssl: true
+# verify_certs: true
+
+# ElastAlert2 writes its own metadata/state here.
+writeback_index: elastalert_status
+
+alert_time_limit:
+  days: 2

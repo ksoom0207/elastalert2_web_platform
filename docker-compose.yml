@@ -1,0 +1,68 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: elastalert
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-elastalert}
+      POSTGRES_DB: elastalert_web
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elastalert"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    command: start-dev --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+    ports:
+      - "8080:8080"
+    volumes:
+      # Drop a realm export here to auto-provision the `elastalert` realm,
+      # `elastalert-web` client, and admin/developer roles.
+      - ./keycloak:/opt/keycloak/data/import:ro
+
+  backend:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://elastalert:${POSTGRES_PASSWORD:-elastalert}@postgres:5432/elastalert_web
+      RULES_FOLDER: /data/rules
+      OIDC_ISSUER: ${OIDC_ISSUER:-http://keycloak:8080/realms/elastalert}
+      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-elastalert-web}
+      ELASTALERT_CONTAINER: elastalert2
+      ELASTALERT_CONFIG: /opt/elastalert/config.yaml
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+    volumes:
+      - ./elastalert/rules:/data/rules
+      # Needed so the backend can `docker exec` the test dry-run into elastalert2.
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "4000:4000"
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8081:80"
+
+  elastalert2:
+    image: jertel/elastalert2:2.21.0
+    container_name: elastalert2
+    depends_on:
+      - backend
+    volumes:
+      # Admin-managed base config + shared rules folder (read by ElastAlert2).
+      - ./elastalert/config.yaml:/opt/elastalert/config.yaml:ro
+      - ./elastalert/rules:/opt/elastalert/rules
+
+volumes:
+  pgdata:

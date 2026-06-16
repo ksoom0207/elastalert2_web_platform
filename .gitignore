@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.log
+
+# Rendered rule files (state lives in the DB; files are reconciled on boot).
+elastalert/rules/*.yaml
+elastalert/rules/._*.yaml
