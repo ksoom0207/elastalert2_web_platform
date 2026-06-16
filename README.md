@@ -47,13 +47,17 @@ docker compose up -d --build
 - 백엔드 API: http://localhost:4000
 - Keycloak: http://localhost:8080 (admin/admin)
 
-### Keycloak 초기 설정 (최초 1회)
+### Keycloak 초기 설정
 
-`keycloak/` 에 realm export(json)를 두면 자동 import 됩니다. 수동 설정 시:
+`keycloak/realm.json` 이 컨테이너 기동 시 자동 import 됩니다 (`start-dev --import-realm`).
+자동 생성되는 항목:
 
-1. realm `elastalert` 생성
-2. client `elastalert-web` 생성 (public, PKCE S256, redirect `http://localhost:8081/*`)
-3. realm role `admin`, `developer` 생성 후 사용자에게 부여
+- realm `elastalert`
+- client `elastalert-web` (public, PKCE S256, redirect `localhost:8081`/`5173`, `aud` 매퍼)
+- realm role `admin`, `developer`
+- 샘플 계정 — `admin-user` / `dev-user` (초기 비밀번호 `changeme`, **첫 로그인 시 변경 필요**)
+
+> 운영에서는 샘플 계정을 삭제하고 사내 IdP 연동(LDAP/OIDC federation)을 붙이세요.
 
 ## 디렉토리
 
@@ -65,8 +69,8 @@ elastalert/ config.yaml(관리자) + rules/(렌더링된 룰, 공유 볼륨)
 
 ## 남은 결정 / TODO
 
-- **Keycloak realm export** 파일 추가 (현재는 수동 설정 안내만 포함).
-- **Elasticsearch**: compose 에 ES 미포함 — 사내 클러스터 주소를 `config.yaml`/env 로 연결.
+- **Elasticsearch**: 외부 개별 노드 사용 (compose 에 미포함). `elastalert/config.yaml` 의
+  `es_host`/`es_port`/인증을 사내 노드에 맞게 설정하세요.
 - **테스트 dry-run**: 백엔드가 `docker.sock` 으로 `docker exec` → 운영에서는 권한 최소화 검토 필요.
 - **즉시 반영**이 필요하면 `run_every` 대기 대신 ElastAlert2 재시작 트리거 옵션 추가 고려.
 - 프로덕션은 `prisma db push` 대신 커밋된 마이그레이션(`prisma migrate deploy`) 사용 권장.

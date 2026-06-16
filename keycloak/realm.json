@@ -1,0 +1,83 @@
+{
+  "realm": "elastalert",
+  "enabled": true,
+  "displayName": "ElastAlert2 Web Platform",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "accessTokenLifespan": 900,
+
+  "roles": {
+    "realm": [
+      { "name": "admin", "description": "config.yaml/webhook 관리 + 모든 룰 관리" },
+      { "name": "developer", "description": "본인 룰만 생성/관리" }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "elastalert-web",
+      "name": "ElastAlert2 Web (frontend)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "rootUrl": "http://localhost:8081",
+      "baseUrl": "http://localhost:8081",
+      "redirectUris": [
+        "http://localhost:8081/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8081",
+        "http://localhost:5173",
+        "+"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:8081/*##http://localhost:5173/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audience-elastalert-web",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "elastalert-web",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "admin-user",
+      "enabled": true,
+      "email": "admin@example.com",
+      "emailVerified": true,
+      "firstName": "Platform",
+      "lastName": "Admin",
+      "credentials": [
+        { "type": "password", "value": "changeme", "temporary": true }
+      ],
+      "realmRoles": ["admin", "developer"]
+    },
+    {
+      "username": "dev-user",
+      "enabled": true,
+      "email": "dev@example.com",
+      "emailVerified": true,
+      "firstName": "Sample",
+      "lastName": "Developer",
+      "credentials": [
+        { "type": "password", "value": "changeme", "temporary": true }
+      ],
+      "realmRoles": ["developer"]
+    }
+  ]
+}

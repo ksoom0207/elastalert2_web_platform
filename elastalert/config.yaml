@@ -12,8 +12,9 @@ run_every:
 buffer_time:
   minutes: 15
 
-# --- Elasticsearch connection (edit for your cluster) ---
-es_host: elasticsearch
+# --- Elasticsearch connection ---
+# 외부 개별 ES 노드를 사용합니다. 아래 주소/인증을 사내 노드에 맞게 변경하세요.
+es_host: your-es-node.internal
 es_port: 9200
 # es_username: elastic
 # es_password: changeme
