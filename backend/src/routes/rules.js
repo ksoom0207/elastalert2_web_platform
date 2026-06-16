@@ -39,7 +39,7 @@ const ruleSchema = z.object({
 function validateRulePayload(data) {
   if (data.template === 'CUSTOM') {
     if (!data.rawYaml) throw httpError(400, 'Custom 룰은 rawYaml이 필요합니다');
-    const v = validateCustomYaml(data.rawYaml);
+    const v = validateCustomYaml(data.rawYaml, data.name);
     if (!v.ok) throw httpError(400, v.error);
   } else if (!data.esIndex) {
     throw httpError(400, '템플릿 룰은 esIndex가 필요합니다');

@@ -101,10 +101,16 @@ export default function RuleEditor() {
       </Field>
 
       {form.template === 'CUSTOM' && (
-        <Field label="Raw YAML (전체 rule 직접 작성)">
-          <textarea rows={14} style={{ width: '100%', fontFamily: 'monospace' }}
-            value={form.rawYaml || ''} onChange={(e) => set('rawYaml', e.target.value)} />
-        </Field>
+        <div>
+          <Field label="Raw YAML (전체 rule 직접 작성)">
+            <textarea rows={14} style={{ width: '100%', fontFamily: 'monospace' }}
+              value={form.rawYaml || ''} onChange={(e) => set('rawYaml', e.target.value)} />
+          </Field>
+          <p style={{ color: '#666', fontSize: 12, marginLeft: 252 }}>
+            작성한 그대로(주석·들여쓰기 포함) 저장됩니다. <code>name: {form.name || '<룰 이름>'}</code> 을
+            반드시 포함하고, 룰 이름과 일치시켜 주세요. (type / index / alert 필수)
+          </p>
+        </div>
       )}
 
       <div style={{ marginTop: 16 }}>

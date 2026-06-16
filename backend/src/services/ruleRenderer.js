@@ -45,12 +45,18 @@ export function renderRuleObject(rule, defaultWebhook) {
 }
 
 export function renderRuleYaml(rule, defaultWebhook) {
+  // Custom rules are written verbatim so comments / formatting are preserved
+  // exactly as the user typed them. Validation (incl. name match) happens on save.
+  if (rule.template === 'CUSTOM') return rule.rawYaml || '';
   const obj = renderRuleObject(rule, defaultWebhook);
   return yaml.dump(obj, { lineWidth: 120, noRefs: true });
 }
 
-// Validate that custom YAML at least parses and has the minimum required fields.
-export function validateCustomYaml(rawYaml) {
+// Validate that custom YAML parses and has the minimum required fields.
+// Since custom YAML is written verbatim, we require an explicit `name` that
+// matches the rule name so the ElastAlert2 rule name stays consistent with the
+// platform's record (the file itself is named by rule id).
+export function validateCustomYaml(rawYaml, expectedName) {
   let parsed;
   try {
     parsed = yaml.load(rawYaml);
@@ -60,8 +66,15 @@ export function validateCustomYaml(rawYaml) {
   if (!parsed || typeof parsed !== 'object') {
     return { ok: false, error: 'YAML must define a mapping' };
   }
+  if (!parsed.name) return { ok: false, error: 'Missing required field: name' };
   if (!parsed.type) return { ok: false, error: 'Missing required field: type' };
   if (!parsed.index) return { ok: false, error: 'Missing required field: index' };
   if (!parsed.alert) return { ok: false, error: 'Missing required field: alert' };
+  if (expectedName && parsed.name !== expectedName) {
+    return {
+      ok: false,
+      error: `YAML의 name("${parsed.name}")이 룰 이름("${expectedName}")과 일치해야 합니다`,
+    };
+  }
   return { ok: true };
 }
