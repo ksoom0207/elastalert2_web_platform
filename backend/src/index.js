@@ -7,6 +7,7 @@ import health from './routes/health.js';
 import templates from './routes/templates.js';
 import webhooks from './routes/webhooks.js';
 import rules from './routes/rules.js';
+import audit from './routes/audit.js';
 import { syncAll } from './services/ruleSync.js';
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(health);
 app.use('/api/templates', templates);
 app.use('/api/webhooks', webhooks);
 app.use('/api/rules', rules);
+app.use('/api/audit', audit);
 
 app.use(errorHandler);
 
