@@ -40,12 +40,20 @@ React(Vite) ──> Express API ──> PostgreSQL (룰 메타데이터)
 
 ```bash
 cp .env.example .env
+# .env 의 KEYCLOAK_URL 을 호스트 LAN IP 로 설정 (브라우저+백엔드 양쪽에서 닿아야 함)
 docker compose up -d --build
 ```
 
-- 프론트엔드: http://localhost:8081
-- 백엔드 API: http://localhost:4000
-- Keycloak: http://localhost:8080 (admin/admin)
+- 프론트엔드: http://<host>:8081
+- 백엔드 API: http://<host>:4000
+- Keycloak: http://<host>:8080 (admin/admin)
+
+> **중요 — KEYCLOAK_URL 하나로 묶임:** 프론트(`VITE_KEYCLOAK_URL`)와
+> 백엔드(`OIDC_ISSUER`)가 모두 `KEYCLOAK_URL` 에서 파생됩니다. 이 값은
+> **브라우저와 백엔드 컨테이너 양쪽에서 접근 가능한 주소(호스트 LAN IP)** 여야 합니다.
+> `localhost`(브라우저만 동작) / `keycloak`(컨테이너 내부만 동작) 를 쓰면 토큰 issuer
+> 불일치로 로그인 후 401 이 발생합니다. `KEYCLOAK_URL` 변경 후에는 프론트 재빌드 필요:
+> `docker compose up -d --build frontend`.
 
 ### Keycloak 초기 설정
 

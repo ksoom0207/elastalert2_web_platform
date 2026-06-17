@@ -20,10 +20,11 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       # Dev: allow reaching Keycloak via any hostname/IP (LAN, localhost, etc.).
+      # With STRICT=false the token issuer reflects the host the browser used,
+      # so the backend's OIDC_ISSUER must use that same host (see KEYCLOAK_URL).
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "false"
       KC_HTTP_ENABLED: "true"
-      KC_PROXY: edge
     ports:
       - "8080:8080"
     volumes:
@@ -39,8 +40,10 @@ services:
       PORT: 4000
       DATABASE_URL: postgresql://elastalert:${POSTGRES_PASSWORD:-elastalert}@postgres:5432/elastalert_web
       RULES_FOLDER: /data/rules
-      OIDC_ISSUER: ${OIDC_ISSUER:-http://keycloak:8080/realms/elastalert}
-      OIDC_AUDIENCE: ${OIDC_AUDIENCE:-elastalert-web}
+      # Must equal the token issuer, i.e. the SAME Keycloak URL the browser used.
+      # Built from KEYCLOAK_URL so frontend + backend stay in sync.
+      OIDC_ISSUER: ${KEYCLOAK_URL:-http://keycloak:8080}/realms/${KEYCLOAK_REALM:-elastalert}
+      OIDC_AUDIENCE: ${KEYCLOAK_CLIENT:-elastalert-web}
       ELASTALERT_CONTAINER: elastalert2
       ELASTALERT_CONFIG: /opt/elastalert/config.yaml
       CORS_ORIGIN: ${CORS_ORIGIN:-*}
@@ -55,10 +58,10 @@ services:
     build:
       context: ./frontend
       args:
-        # 브라우저에서 접근 가능한 Keycloak URL 이어야 합니다 (LAN IP 등).
-        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://localhost:8080}
-        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-elastalert}
-        VITE_KEYCLOAK_CLIENT: ${VITE_KEYCLOAK_CLIENT:-elastalert-web}
+        # 브라우저 + 백엔드 양쪽에서 닿는 Keycloak URL 이어야 합니다 (호스트 LAN IP).
+        VITE_KEYCLOAK_URL: ${KEYCLOAK_URL:-http://localhost:8080}
+        VITE_KEYCLOAK_REALM: ${KEYCLOAK_REALM:-elastalert}
+        VITE_KEYCLOAK_CLIENT: ${KEYCLOAK_CLIENT:-elastalert-web}
     depends_on:
       - backend
     ports:
