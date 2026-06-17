@@ -19,11 +19,15 @@ services:
     environment:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      # Dev: allow reaching Keycloak via any hostname/IP (LAN, localhost, etc.).
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
     ports:
       - "8080:8080"
     volumes:
-      # Drop a realm export here to auto-provision the `elastalert` realm,
-      # `elastalert-web` client, and admin/developer roles.
+      # realm.json is imported on every start (start-dev --import-realm).
       - ./keycloak:/opt/keycloak/data/import:ro
 
   backend:
@@ -48,7 +52,13 @@ services:
       - "4000:4000"
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        # 브라우저에서 접근 가능한 Keycloak URL 이어야 합니다 (LAN IP 등).
+        VITE_KEYCLOAK_URL: ${VITE_KEYCLOAK_URL:-http://localhost:8080}
+        VITE_KEYCLOAK_REALM: ${VITE_KEYCLOAK_REALM:-elastalert}
+        VITE_KEYCLOAK_CLIENT: ${VITE_KEYCLOAK_CLIENT:-elastalert-web}
     depends_on:
       - backend
     ports:
