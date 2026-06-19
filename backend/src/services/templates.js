@@ -48,25 +48,54 @@ export const TEMPLATES = {
 
   APM_500: {
     key: 'APM_500',
-    label: 'APM 500 에러 수집',
-    description: 'HTTP 5xx 응답이 임계치 이상이면 알림',
-    defaultIndex: 'apm-*-transaction',
+    label: 'APM HTTP 500 에러 수집',
+    description: 'APM 서비스에서 HTTP 500 에러 발생 시 즉시 알림 (type: any, realert 5분)',
+    defaultIndex: 'traces-apm-*',
     fields: [
-      { name: 'service', label: 'service.name', type: 'text', required: false },
-      { name: 'statusCode', label: '상태 코드', type: 'number', default: 500, required: true },
-      { name: 'numEvents', label: '임계 건수', type: 'number', default: 10, required: true },
-      { name: 'timeframeMinutes', label: '집계 시간(분)', type: 'number', default: 5, required: true },
+      { name: 'services', label: 'service.name (쉼표 구분, 복수 가능)', type: 'text', required: true, default: '' },
+      { name: 'statusCode', label: 'HTTP 상태 코드', type: 'number', default: 500, required: true },
+      { name: 'realertMinutes', label: '동일 알람 반복 방지(분)', type: 'number', default: 5, required: true },
+      { name: 'alertText', label: 'alert_text (알림 본문 템플릿)', type: 'textarea', required: false,
+        default: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🚨 *HTTP 500 에러 발생*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📍 *서비스*: `{0}`\n🌐 *환경*: `{1}`\n📡 *API*: `{2} {3}`\n🔗 *URL*: `{4}`\n⚠️ *상태코드*: `{5}`\n🖥️ *호스트*: `{6}`\n🕐 *발생시각*: `{7}`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' },
+      { name: 'alertTextArgs', label: 'alert_text_args (쉼표 구분)', type: 'text', required: false,
+        default: 'service.name,service.environment,http.request.method,transaction.name,url.full,http.response.status_code,host.name,@timestamp' },
     ],
     build(p) {
-      const filters = [
-        { term: { 'http.response.status_code': Number(p.statusCode ?? 500) } },
-      ];
-      if (p.service) filters.push({ term: { 'service.name': p.service } });
+      const serviceList = (p.services || '')
+        .split(',').map((s) => s.trim()).filter(Boolean);
+
+      const filters = [];
+      if (serviceList.length > 0) {
+        filters.push({ terms: { 'service.name': serviceList } });
+      }
+      filters.push({ term: { 'http.response.status_code': Number(p.statusCode ?? 500) } });
+
+      const alertText = p.alertText ||
+        '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🚨 *HTTP 500 에러 발생*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📍 *서비스*: `{0}`\n🌐 *환경*: `{1}`\n📡 *API*: `{2} {3}`\n🔗 *URL*: `{4}`\n⚠️ *상태코드*: `{5}`\n🖥️ *호스트*: `{6}`\n🕐 *발생시각*: `{7}`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+
+      const argsStr = p.alertTextArgs ||
+        'service.name,service.environment,http.request.method,transaction.name,url.full,http.response.status_code,host.name,@timestamp';
+
       return {
-        type: 'frequency',
-        num_events: Number(p.numEvents ?? 10),
-        timeframe: { minutes: Number(p.timeframeMinutes ?? 5) },
+        type: 'any',
+        realert: { minutes: Number(p.realertMinutes ?? 5) },
         filter: filters,
+        include: [
+          'service.name',
+          'service.environment',
+          'transaction.name',
+          'http.request.method',
+          'url.full',
+          'http.response.status_code',
+          'host.name',
+          '@timestamp',
+        ],
+        timestamp_field: '@timestamp',
+        timestamp_type: 'iso',
+        timestamp_format: '%Y-%m-%dT%H:%M:%S.%fZ',
+        alert_text_type: 'alert_text_only',
+        alert_text: alertText,
+        alert_text_args: argsStr.split(',').map((s) => s.trim()).filter(Boolean),
       };
     },
   },
