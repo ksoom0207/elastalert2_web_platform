@@ -106,32 +106,36 @@ export default function RuleEditor() {
             </>
           )}
 
-          <hr className="hr-groove" />
-          <div className="section-title90">Alerter 설정</div>
-          <Field label="채널 종류">
-            <select value={form.alerter} onChange={(e) => set('alerter', e.target.value)}>
-              <option value="mattermost">Mattermost</option>
-              <option value="slack">Slack</option>
-            </select>
-          </Field>
-          <Field label="Channel override">
-            <input value={form.alerterConfig.channelOverride || ''} onChange={(e) => setCfg('channelOverride', e.target.value)} placeholder="infra-alerts" />
-          </Field>
-          <Field label="Username override">
-            <input value={form.alerterConfig.usernameOverride || ''} onChange={(e) => setCfg('usernameOverride', e.target.value)} placeholder="ElastAlert" />
-          </Field>
-          <Field label="Msg color">
-            <select value={form.alerterConfig.msgColor || ''} onChange={(e) => setCfg('msgColor', e.target.value)}>
-              <option value="">(기본)</option>
-              <option value="good">good</option>
-              <option value="warning">warning</option>
-              <option value="danger">danger</option>
-              <option value="#FF8800">#HEX (예시)</option>
-            </select>
-          </Field>
-          <Field label="Webhook override">
-            <input value={form.alerterConfig.webhookOverride || ''} onChange={(e) => setCfg('webhookOverride', e.target.value)} placeholder="비우면 관리자 기본 webhook 사용" />
-          </Field>
+          {form.template !== 'CUSTOM' && (
+            <>
+              <hr className="hr-groove" />
+              <div className="section-title90">Alerter 설정</div>
+              <Field label="채널 종류">
+                <select value={form.alerter} onChange={(e) => set('alerter', e.target.value)}>
+                  <option value="mattermost">Mattermost</option>
+                  <option value="slack">Slack</option>
+                </select>
+              </Field>
+              <Field label="Channel override">
+                <input value={form.alerterConfig.channelOverride || ''} onChange={(e) => setCfg('channelOverride', e.target.value)} placeholder="infra-alerts" />
+              </Field>
+              <Field label="Username override">
+                <input value={form.alerterConfig.usernameOverride || ''} onChange={(e) => setCfg('usernameOverride', e.target.value)} placeholder="ElastAlert" />
+              </Field>
+              <Field label="Msg color">
+                <select value={form.alerterConfig.msgColor || ''} onChange={(e) => setCfg('msgColor', e.target.value)}>
+                  <option value="">(기본)</option>
+                  <option value="good">good</option>
+                  <option value="warning">warning</option>
+                  <option value="danger">danger</option>
+                  <option value="#FF8800">#HEX (예시)</option>
+                </select>
+              </Field>
+              <Field label="Webhook override">
+                <input value={form.alerterConfig.webhookOverride || ''} onChange={(e) => setCfg('webhookOverride', e.target.value)} placeholder="비우면 관리자 기본 webhook 사용" />
+              </Field>
+            </>
+          )}
 
           {form.template === 'CUSTOM' && (
             <>
@@ -145,6 +149,10 @@ export default function RuleEditor() {
               <div className="field-hint90">
                 작성한 그대로(주석·들여쓰기 포함) 저장됩니다.
                 name: {form.name || '<룰 이름>'} 을 반드시 포함하세요. (type / index / alert 필수)
+              </div>
+              <div className="custom-alert-notice">
+                ⚠ Custom 룰은 <b>alerter 설정(alert, webhook_url, channel 등)을 YAML에 직접 작성</b>해야 합니다.
+                위 Alerter 폼은 Custom 룰에 적용되지 않습니다.
               </div>
             </>
           )}
