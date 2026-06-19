@@ -104,6 +104,8 @@ router.post(
   asyncHandler(async (req, res) => {
     const data = ruleSchema.parse(req.body);
     validateRulePayload(data);
+    const existing = await prisma.rule.findUnique({ where: { name: data.name } });
+    if (existing) throw httpError(409, `이름 "${data.name}"은(는) 이미 사용 중입니다`);
     const rule = await prisma.rule.create({
       data: { ...data, enabled: false, ownerId: req.user.id },
     });
