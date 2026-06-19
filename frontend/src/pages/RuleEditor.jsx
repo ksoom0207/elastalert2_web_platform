@@ -79,11 +79,28 @@ export default function RuleEditor() {
               </Field>
               {tpl?.fields.map((fld) => (
                 <Field key={fld.name} label={fld.label}>
-                  <input
-                    type={fld.type === 'number' ? 'number' : 'text'}
-                    value={form.params[fld.name] ?? fld.default ?? ''}
-                    onChange={(e) => setParam(fld.name, e.target.value)}
-                  />
+                  {fld.type === 'select' ? (
+                    <select
+                      value={form.params[fld.name] ?? fld.default ?? ''}
+                      onChange={(e) => setParam(fld.name, e.target.value)}
+                    >
+                      {(fld.options || []).map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : fld.type === 'textarea' ? (
+                    <textarea
+                      rows={8}
+                      value={form.params[fld.name] ?? fld.default ?? ''}
+                      onChange={(e) => setParam(fld.name, e.target.value)}
+                    />
+                  ) : (
+                    <input
+                      type={fld.type === 'number' ? 'number' : 'text'}
+                      value={form.params[fld.name] ?? fld.default ?? ''}
+                      onChange={(e) => setParam(fld.name, e.target.value)}
+                    />
+                  )}
                 </Field>
               ))}
             </>
