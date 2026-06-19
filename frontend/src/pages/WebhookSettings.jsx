@@ -3,13 +3,11 @@ import { api } from '../api/client.js';
 
 // Admin-only: set default webhook URLs (e.g. the mattermost infra webhook).
 export default function WebhookSettings() {
-  const [settings, setSettings] = useState([]);
   const [form, setForm] = useState({ slack: '', mattermost: '' });
   const [msg, setMsg] = useState('');
 
   const load = () =>
     api.webhooks().then((s) => {
-      setSettings(s);
       const next = { slack: '', mattermost: '' };
       s.forEach((x) => { if (x.webhookUrl) next[x.type] = x.webhookUrl; });
       setForm(next);
@@ -19,27 +17,36 @@ export default function WebhookSettings() {
   const save = async (type) => {
     try {
       await api.saveWebhook({ type, webhookUrl: form[type] });
-      setMsg(`${type} webhook 저장됨`);
+      setMsg(`${type} webhook 저장됨 ✓`);
       load();
     } catch (e) { setMsg(e.message); }
   };
 
   return (
-    <div style={{ marginTop: 16 }}>
-      <h3>기본 Webhook 설정 (관리자)</h3>
-      {msg && <p style={{ color: '#080' }}>{msg}</p>}
-      {['mattermost', 'slack'].map((type) => (
-        <div key={type} style={{ margin: '12px 0', display: 'flex', gap: 12, alignItems: 'center' }}>
-          <label style={{ width: 120 }}>{type}</label>
-          <input style={{ flex: 1 }} value={form[type]}
-            onChange={(e) => setForm((f) => ({ ...f, [type]: e.target.value }))}
-            placeholder="https://.../hooks/xxxx" />
-          <button onClick={() => save(type)}>저장</button>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">Webhook 설정</h1>
+          <p className="page-sub">developer 가 override 를 비워두면 여기 기본값을 사용합니다.</p>
         </div>
-      ))}
-      <p style={{ color: '#666' }}>
-        developer는 rule별 webhook override를 비워두면 여기 설정된 기본값을 사용합니다.
-      </p>
+      </div>
+
+      {msg && <div className="status">{msg}</div>}
+
+      <div className="form">
+        <div className="section-title">기본 Webhook</div>
+        {['mattermost', 'slack'].map((type) => (
+          <div className="field" key={type}>
+            <label>{type}</label>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <input value={form[type]}
+                onChange={(e) => setForm((f) => ({ ...f, [type]: e.target.value }))}
+                placeholder="https://…/hooks/xxxx" />
+              <button className="btn" onClick={() => save(type)}>저장</button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

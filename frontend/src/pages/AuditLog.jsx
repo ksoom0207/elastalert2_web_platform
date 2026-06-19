@@ -11,28 +11,35 @@ export default function AuditLog() {
   }, []);
 
   return (
-    <div style={{ marginTop: 16 }}>
-      <h3>감사 로그</h3>
-      {msg && <p style={{ color: '#c00' }}>{msg}</p>}
-      <table width="100%" cellPadding="6" style={{ borderCollapse: 'collapse' }}>
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1 className="page-title">감사 로그</h1>
+          <p className="page-sub">누가 · 언제 · 무엇을 변경했는지 기록합니다.</p>
+        </div>
+      </div>
+
+      {msg && <div className="status status-err">{msg}</div>}
+
+      <table className="table">
         <thead>
-          <tr style={{ textAlign: 'left', borderBottom: '1px solid #ccc' }}>
+          <tr>
             <th>시각</th><th>사용자</th><th>액션</th><th>대상 Rule</th><th>상세</th>
           </tr>
         </thead>
         <tbody>
           {logs.map((l) => (
-            <tr key={l.id} style={{ borderBottom: '1px solid #eee' }}>
+            <tr key={l.id}>
               <td>{new Date(l.createdAt).toLocaleString()}</td>
-              <td>{l.user?.username || l.user?.email || '-'}</td>
-              <td>{l.action}</td>
-              <td>{l.rule?.name || '-'}</td>
-              <td><code style={{ fontSize: 12 }}>{JSON.stringify(l.detail)}</code></td>
+              <td>{l.user?.username || l.user?.email || '—'}</td>
+              <td><span className="badge badge-on">{l.action}</span></td>
+              <td>{l.rule?.name || '—'}</td>
+              <td><code>{JSON.stringify(l.detail)}</code></td>
             </tr>
           ))}
         </tbody>
       </table>
-      {logs.length === 0 && !msg && <p style={{ color: '#666' }}>기록이 없습니다.</p>}
+      {logs.length === 0 && !msg && <p className="empty">기록이 없습니다.</p>}
     </div>
   );
 }
