@@ -6,6 +6,7 @@ import { ThemeProvider } from './theme/ThemeContext.jsx';
 import App from './App.jsx';
 import './index.css';
 import './theme/swiss.css';
+import './theme/cyberpunk.css';
 
 function fatal(message) {
   document.getElementById('root').innerHTML =

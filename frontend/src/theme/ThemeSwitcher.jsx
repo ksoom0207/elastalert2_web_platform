@@ -3,6 +3,7 @@ import { useTheme } from './ThemeContext.jsx';
 const THEMES = [
   { key: 'retro', label: '90s' },
   { key: 'swiss', label: 'SWISS' },
+  { key: 'cyber', label: 'CYBER' },
 ];
 
 export default function ThemeSwitcher() {
