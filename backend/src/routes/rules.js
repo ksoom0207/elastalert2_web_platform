@@ -61,13 +61,20 @@ router.get(
   '/',
   authenticate,
   asyncHandler(async (req, res) => {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize) || 25));
     const where = req.isAdmin ? {} : { ownerId: req.user.id };
-    const rules = await prisma.rule.findMany({
-      where,
-      orderBy: { updatedAt: 'desc' },
-      include: { owner: { select: { username: true, email: true } } },
-    });
-    res.json(rules);
+    const [total, items] = await Promise.all([
+      prisma.rule.count({ where }),
+      prisma.rule.findMany({
+        where,
+        orderBy: { updatedAt: 'desc' },
+        include: { owner: { select: { username: true, email: true } } },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+      }),
+    ]);
+    res.json({ items, total, page, pageSize });
   })
 );
 

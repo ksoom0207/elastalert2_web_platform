@@ -21,7 +21,7 @@ export const api = {
   templates: () => request('/templates'),
   webhooks: () => request('/webhooks'),
   saveWebhook: (data) => request('/webhooks', { method: 'PUT', body: JSON.stringify(data) }),
-  rules: () => request('/rules'),
+  rules: (page = 1, pageSize = 25) => request(`/rules?page=${page}&pageSize=${pageSize}`),
   rule: (id) => request(`/rules/${id}`),
   createRule: (data) => request('/rules', { method: 'POST', body: JSON.stringify(data) }),
   updateRule: (id, data) => request(`/rules/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

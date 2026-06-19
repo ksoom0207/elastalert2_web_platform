@@ -2,14 +2,22 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../api/client.js';
 
+const PAGE_SIZE = 25;
+
 export default function RuleList() {
   const [rules, setRules] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState(false);
   const navigate = useNavigate();
 
-  const load = () => api.rules().then(setRules).catch((e) => say(e.message, true));
-  useEffect(() => { load(); }, []);
+  const load = () =>
+    api.rules(page, PAGE_SIZE)
+      .then((res) => { setRules(res.items); setTotal(res.total); })
+      .catch((e) => say(e.message, true));
+
+  useEffect(() => { load(); }, [page]);
 
   const say = (m, isErr = false) => { setMsg(m); setErr(isErr); };
 
@@ -34,6 +42,10 @@ export default function RuleList() {
     } catch (e) { say(e.message, true); }
   };
 
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, total);
+
   return (
     <div className="page-90s">
       <div className="page-header-90s">
@@ -53,7 +65,7 @@ export default function RuleList() {
       </div>
 
       <div className="win-card">
-        <div className="win-card-title">📋 Rule Database — {rules.length} entries</div>
+        <div className="win-card-title">📋 Rule Database — {total} entries</div>
         <div className="win-card-body" style={{ padding: 0 }}>
           <table className="table90">
             <thead>
@@ -102,6 +114,18 @@ export default function RuleList() {
           )}
         </div>
       </div>
+
+      {total > 0 && (
+        <div className="pager90">
+          <button className="btn90 btn90-sm" disabled={page <= 1} onClick={() => setPage(1)}>◀◀ 처음</button>
+          <button className="btn90 btn90-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>◀ 이전</button>
+          <span className="pager90-status">
+            {from}–{to} / {total}  ·  PAGE {page} OF {totalPages}
+          </span>
+          <button className="btn90 btn90-sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>다음 ▶</button>
+          <button className="btn90 btn90-sm" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>끝 ▶▶</button>
+        </div>
+      )}
     </div>
   );
 }
