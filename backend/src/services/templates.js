@@ -8,24 +8,41 @@ export const TEMPLATES = {
   K8S_ERROR: {
     key: 'K8S_ERROR',
     label: 'K8s 애플리케이션 ERROR 로그 수집',
-    description: 'log.level: ERROR 로그가 임계치 이상 발생하면 알림',
-    defaultIndex: 'filebeat-*',
+    description: 'log.level: ERROR 로그가 임계치 이상 발생하면 알림 (KST 타임스탬프 포함)',
+    defaultIndex: '.ds-logs-kubernetes.container_logs-default-*',
     fields: [
       { name: 'namespace', label: 'Kubernetes namespace', type: 'text', required: false },
       { name: 'app', label: '애플리케이션 라벨 (kubernetes.labels.app)', type: 'text', required: false },
       { name: 'numEvents', label: '임계 건수', type: 'number', default: 5, required: true },
       { name: 'timeframeMinutes', label: '집계 시간(분)', type: 'number', default: 5, required: true },
+      { name: 'alertText', label: 'alert_text (알림 본문 템플릿)', type: 'textarea', required: false,
+        default: '🚨 *에러 감지*\n\n📅 발생 시각: {0}\n🐳 파드: {1}\n🖥️ 노드: {2}\n\n📋 메시지:\n{3}' },
+      { name: 'alertTextArgs', label: 'alert_text_args (쉼표 구분)', type: 'text', required: false,
+        default: 'timestamp_kst,kubernetes.pod.name,kubernetes.node.name,message' },
     ],
     build(p) {
       const filters = [{ query: { query_string: { query: 'log.level:ERROR OR level:ERROR' } } }];
       if (p.namespace) filters.push({ term: { 'kubernetes.namespace': p.namespace } });
       if (p.app) filters.push({ term: { 'kubernetes.labels.app': p.app } });
-      return {
+
+      const rule = {
         type: 'frequency',
         num_events: Number(p.numEvents ?? 5),
         timeframe: { minutes: Number(p.timeframeMinutes ?? 5) },
         filter: filters,
+        timestamp_field: '@timestamp',
+        timestamp_type: 'iso',
+        match_enhancements: ['kst_enhancer.KSTEnhancement'],
+        alert_text_type: 'alert_text_only',
       };
+
+      const alertText = p.alertText || '🚨 *에러 감지*\n\n📅 발생 시각: {0}\n🐳 파드: {1}\n🖥️ 노드: {2}\n\n📋 메시지:\n{3}';
+      rule.alert_text = alertText;
+
+      const argsStr = p.alertTextArgs || 'timestamp_kst,kubernetes.pod.name,kubernetes.node.name,message';
+      rule.alert_text_args = argsStr.split(',').map((s) => s.trim()).filter(Boolean);
+
+      return rule;
     },
   },
 

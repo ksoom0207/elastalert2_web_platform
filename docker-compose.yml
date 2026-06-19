@@ -72,10 +72,15 @@ services:
     container_name: elastalert2
     depends_on:
       - backend
+    environment:
+      # So ElastAlert2 can import kst_enhancer (and any future enhancements).
+      PYTHONPATH: /opt/elastalert/enhancements
     volumes:
       # Admin-managed base config + shared rules folder (read by ElastAlert2).
       - ./elastalert/config.yaml:/opt/elastalert/config.yaml:ro
       - ./elastalert/rules:/opt/elastalert/rules
+      # Custom match enhancements (kst_enhancer.py etc.).
+      - ./elastalert/enhancements:/opt/elastalert/enhancements:ro
 
 volumes:
   pgdata:
