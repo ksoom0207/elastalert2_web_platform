@@ -16,6 +16,34 @@ const RULE_TYPE_OPTIONS = [
   { value: 'percentage_match', label: 'percentage_match — 비율' },
 ];
 
+// Fields that appear/hide depending on the selected rule type.
+// `showWhen` lists which ruleType values make the field visible.
+const RULE_TYPE_FIELDS = [
+  { name: 'numEvents', label: '임계 건수 (num_events)', type: 'number', default: 5, required: true,
+    showWhen: ['frequency'] },
+  { name: 'threshold', label: '최소 건수 (threshold, 이 이하면 알림)', type: 'number', default: 1, required: true,
+    showWhen: ['flatline'] },
+  { name: 'spikeHeight', label: 'spike 배수 (spike_height)', type: 'number', default: 3, required: true,
+    showWhen: ['spike'] },
+  { name: 'spikeType', label: 'spike 방향 (spike_type)', type: 'select', default: 'up', required: true,
+    options: [{ value: 'up', label: 'up — 급증' }, { value: 'down', label: 'down — 급감' }, { value: 'both', label: 'both — 둘 다' }],
+    showWhen: ['spike'] },
+  { name: 'compareKey', label: '비교 필드 (compare_key)', type: 'text', default: 'status', required: true,
+    showWhen: ['change'] },
+  { name: 'newTermFields', label: '감시 필드 (쉼표 구분)', type: 'text', default: '', required: true,
+    showWhen: ['new_term'] },
+  { name: 'cardinalityField', label: 'cardinality 필드', type: 'text', default: '', required: true,
+    showWhen: ['cardinality'] },
+  { name: 'maxCardinality', label: '최대 고유 값 수 (max_cardinality)', type: 'number', default: 100, required: true,
+    showWhen: ['cardinality'] },
+  { name: 'minPercentage', label: '최소 비율 (min_percentage)', type: 'number', default: 50, required: true,
+    showWhen: ['percentage_match'] },
+  { name: 'timeframeMinutes', label: '집계 시간(분)', type: 'number', default: 5, required: true,
+    showWhen: ['frequency', 'flatline', 'spike', 'change', 'new_term', 'cardinality', 'percentage_match'] },
+  { name: 'realertMinutes', label: '동일 알람 반복 방지(분)', type: 'number', default: 5, required: false,
+    showWhen: ['any', 'frequency', 'flatline', 'spike', 'change', 'new_term', 'cardinality', 'percentage_match'] },
+];
+
 // Helper: attach type-dependent timing fields to the rule object.
 function applyRuleType(rule, p) {
   const ruleType = p.ruleType || 'frequency';
@@ -27,16 +55,15 @@ function applyRuleType(rule, p) {
       rule.timeframe = { minutes: Number(p.timeframeMinutes ?? 5) };
       break;
     case 'flatline':
-      rule.threshold = Number(p.numEvents ?? 1);
+      rule.threshold = Number(p.threshold ?? 1);
       rule.timeframe = { minutes: Number(p.timeframeMinutes ?? 5) };
       break;
     case 'spike':
-      rule.spike_height = Number(p.numEvents ?? 3);
-      rule.spike_type = 'up';
+      rule.spike_height = Number(p.spikeHeight ?? 3);
+      rule.spike_type = p.spikeType || 'up';
       rule.timeframe = { minutes: Number(p.timeframeMinutes ?? 5) };
       break;
     case 'any':
-      if (p.realertMinutes) rule.realert = { minutes: Number(p.realertMinutes) };
       break;
     case 'change':
       rule.compare_key = p.compareKey || 'status';
@@ -48,17 +75,19 @@ function applyRuleType(rule, p) {
       break;
     case 'cardinality':
       rule.cardinality_field = p.cardinalityField || '';
-      rule.max_cardinality = Number(p.numEvents ?? 100);
+      rule.max_cardinality = Number(p.maxCardinality ?? 100);
       rule.timeframe = { minutes: Number(p.timeframeMinutes ?? 5) };
       break;
     case 'percentage_match':
-      rule.match_bucket_filter = {};
-      rule.min_percentage = Number(p.numEvents ?? 50);
+      rule.min_percentage = Number(p.minPercentage ?? 50);
       rule.timeframe = { minutes: Number(p.timeframeMinutes ?? 5) };
       break;
     default:
       rule.timeframe = { minutes: Number(p.timeframeMinutes ?? 5) };
   }
+
+  if (p.realertMinutes) rule.realert = { minutes: Number(p.realertMinutes) };
+
   return rule;
 }
 
@@ -72,9 +101,7 @@ export const TEMPLATES = {
       { name: 'ruleType', label: 'Rule Type', type: 'select', required: true, default: 'frequency', options: RULE_TYPE_OPTIONS },
       { name: 'namespace', label: 'Kubernetes namespace', type: 'text', required: false },
       { name: 'app', label: '애플리케이션 라벨 (kubernetes.labels.app)', type: 'text', required: false },
-      { name: 'numEvents', label: '임계 건수 (frequency: 건수, flatline: 하한)', type: 'number', default: 5, required: true },
-      { name: 'timeframeMinutes', label: '집계 시간(분)', type: 'number', default: 5, required: true },
-      { name: 'realertMinutes', label: '동일 알람 반복 방지(분, type=any 시 적용)', type: 'number', default: 5, required: false },
+      ...RULE_TYPE_FIELDS,
       { name: 'alertText', label: 'alert_text (알림 본문 템플릿)', type: 'textarea', required: false,
         default: '🚨 *에러 감지*\n\n📅 발생 시각: {0}\n🐳 파드: {1}\n🖥️ 노드: {2}\n\n📋 메시지:\n{3}' },
       { name: 'alertTextArgs', label: 'alert_text_args (쉼표 구분)', type: 'text', required: false,
@@ -112,9 +139,7 @@ export const TEMPLATES = {
       { name: 'ruleType', label: 'Rule Type', type: 'select', required: true, default: 'any', options: RULE_TYPE_OPTIONS },
       { name: 'services', label: 'service.name (쉼표 구분, 복수 가능)', type: 'text', required: true, default: '' },
       { name: 'statusCode', label: 'HTTP 상태 코드', type: 'number', default: 500, required: true },
-      { name: 'numEvents', label: '임계 건수 (frequency/flatline/spike 시)', type: 'number', default: 10, required: false },
-      { name: 'timeframeMinutes', label: '집계 시간(분, frequency/flatline/spike 시)', type: 'number', default: 5, required: false },
-      { name: 'realertMinutes', label: '동일 알람 반복 방지(분)', type: 'number', default: 5, required: true },
+      ...RULE_TYPE_FIELDS,
       { name: 'alertText', label: 'alert_text (알림 본문 템플릿)', type: 'textarea', required: false,
         default: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🚨 *HTTP 500 에러 발생*\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n📍 *서비스*: `{0}`\n🌐 *환경*: `{1}`\n📡 *API*: `{2} {3}`\n🔗 *URL*: `{4}`\n⚠️ *상태코드*: `{5}`\n🖥️ *호스트*: `{6}`\n🕐 *발생시각*: `{7}`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━' },
       { name: 'alertTextArgs', label: 'alert_text_args (쉼표 구분)', type: 'text', required: false,
