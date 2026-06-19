@@ -2,8 +2,10 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { initKeycloak } from './auth/keycloak.js';
+import { ThemeProvider } from './theme/ThemeContext.jsx';
 import App from './App.jsx';
 import './index.css';
+import './theme/swiss.css';
 
 function fatal(message) {
   document.getElementById('root').innerHTML =
@@ -26,7 +28,9 @@ initKeycloak()
     createRoot(document.getElementById('root')).render(
       <React.StrictMode>
         <BrowserRouter>
-          <App />
+          <ThemeProvider>
+            <App />
+          </ThemeProvider>
         </BrowserRouter>
       </React.StrictMode>
     );

@@ -1,0 +1,756 @@
+/* =====================================================================
+   ElastAlert² — Swiss International Typographic Style
+   Objective communication. Mathematical precision. The grid is law.
+   ===================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&display=swap');
+
+/* --- Swiss Design Tokens --- */
+[data-theme="swiss"] {
+  --swiss-bg: #FFFFFF;
+  --swiss-fg: #000000;
+  --swiss-muted: #F2F2F2;
+  --swiss-accent: #FF3000;
+  --swiss-border: #000000;
+  --swiss-font: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+
+/* --- Texture Patterns --- */
+[data-theme="swiss"] .swiss-grid-pattern {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+[data-theme="swiss"] .swiss-dots {
+  background-image: radial-gradient(circle, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+[data-theme="swiss"] .swiss-noise::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  pointer-events: none;
+}
+
+/* --- Keyframes --- */
+@keyframes swiss-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- Reset body for Swiss --- */
+[data-theme="swiss"] body,
+body[data-theme="swiss"] {
+  font-family: var(--swiss-font);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--swiss-fg);
+  background-color: var(--swiss-bg);
+  background-image: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body[data-theme="swiss"] ::selection {
+  background: var(--swiss-accent);
+  color: #FFFFFF;
+}
+
+body[data-theme="swiss"] h1,
+body[data-theme="swiss"] h2,
+body[data-theme="swiss"] h3,
+body[data-theme="swiss"] h4 {
+  font-family: var(--swiss-font);
+  font-weight: 900;
+  line-height: 1.0;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
+}
+
+body[data-theme="swiss"] a {
+  color: var(--swiss-fg);
+  text-decoration: none;
+  border-bottom: 2px solid var(--swiss-accent);
+  transition: color 0.15s ease-out, border-color 0.15s ease-out;
+}
+body[data-theme="swiss"] a:visited { color: var(--swiss-fg); }
+body[data-theme="swiss"] a:hover {
+  color: var(--swiss-accent);
+  border-bottom-color: transparent;
+}
+
+/* --- App Shell --- */
+body[data-theme="swiss"] .win95-app {
+  max-width: 1200px;
+  margin: 0 auto;
+  border: none;
+  border-color: transparent;
+  box-shadow: none;
+  background: var(--swiss-bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  border-left: 4px solid var(--swiss-fg);
+  border-right: 4px solid var(--swiss-fg);
+}
+
+/* --- Title Bar → Swiss Header --- */
+body[data-theme="swiss"] .win95-titlebar {
+  background: var(--swiss-fg);
+  color: var(--swiss-bg);
+  font-family: var(--swiss-font);
+  font-weight: 900;
+  font-size: 11px;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: none;
+}
+body[data-theme="swiss"] .win95-titlebar-icon {
+  width: 24px; height: 24px;
+  background: var(--swiss-accent);
+  border: none;
+  display: grid; place-items: center;
+  font-size: 10px; font-weight: 900; color: var(--swiss-bg);
+  font-family: var(--swiss-font);
+}
+body[data-theme="swiss"] .win95-titlebar-text { flex: 1; }
+body[data-theme="swiss"] .win95-titlebar-btns { display: flex; gap: 4px; }
+body[data-theme="swiss"] .win95-titlebar-btn {
+  width: 24px; height: 24px;
+  background: transparent;
+  border: 2px solid var(--swiss-bg);
+  box-shadow: none;
+  font-size: 11px; line-height: 20px; text-align: center;
+  cursor: pointer; padding: 0;
+  font-family: var(--swiss-font); font-weight: 700; color: var(--swiss-bg);
+  transition: background 0.15s ease-out, color 0.15s ease-out;
+}
+body[data-theme="swiss"] .win95-titlebar-btn:hover {
+  background: var(--swiss-accent);
+  border-color: var(--swiss-accent);
+}
+body[data-theme="swiss"] .win95-titlebar-btn:active {
+  transform: none;
+  border-color: var(--swiss-bg);
+  box-shadow: none;
+}
+
+/* --- Menu Bar → Swiss Nav --- */
+body[data-theme="swiss"] .win95-menubar {
+  display: flex;
+  gap: 0;
+  padding: 0;
+  background: var(--swiss-bg);
+  border-bottom: 4px solid var(--swiss-fg);
+}
+body[data-theme="swiss"] .win95-menu-item {
+  padding: 12px 24px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--swiss-fg);
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  border-bottom: none;
+  background: transparent;
+  font-family: var(--swiss-font);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  position: relative;
+  transition: color 0.15s ease-out;
+}
+body[data-theme="swiss"] .win95-menu-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 4px;
+  background: transparent;
+  transition: background 0.15s ease-out;
+}
+body[data-theme="swiss"] .win95-menu-item:hover {
+  color: var(--swiss-accent);
+  background: transparent;
+  text-decoration: none;
+}
+body[data-theme="swiss"] .win95-menu-item:hover::after {
+  background: var(--swiss-accent);
+}
+body[data-theme="swiss"] .win95-menu-item.active {
+  color: var(--swiss-accent);
+  background: transparent;
+}
+body[data-theme="swiss"] .win95-menu-item.active::after {
+  background: var(--swiss-accent);
+}
+body[data-theme="swiss"] .win95-menu-item:visited { color: var(--swiss-fg); text-decoration: none; }
+body[data-theme="swiss"] .win95-menu-item:hover:visited { color: var(--swiss-accent); }
+body[data-theme="swiss"] .win95-menu-item.active:visited { color: var(--swiss-accent); }
+
+/* --- Marquee → Swiss Ticker --- */
+body[data-theme="swiss"] .marquee-bar {
+  background: var(--swiss-muted);
+  color: var(--swiss-fg);
+  font-weight: 500;
+  font-size: 11px;
+  padding: 8px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+body[data-theme="swiss"] .marquee-bar span { padding: 0 16px; color: var(--swiss-fg); }
+body[data-theme="swiss"] .marquee-bar .hot { color: var(--swiss-accent); font-weight: 700; }
+body[data-theme="swiss"] .marquee-bar .grn { color: var(--swiss-fg); }
+body[data-theme="swiss"] .marquee-bar .cyn { color: var(--swiss-fg); }
+body[data-theme="swiss"] .marquee-bar .wht { color: rgba(0,0,0,0.3); }
+
+/* --- Content --- */
+body[data-theme="swiss"] .win95-content {
+  flex: 1;
+  padding: 48px 24px;
+}
+
+/* --- Status Bar → Swiss Footer --- */
+body[data-theme="swiss"] .win95-statusbar {
+  display: flex;
+  gap: 0;
+  padding: 12px 24px;
+  border-top: 4px solid var(--swiss-fg);
+  font-size: 10px;
+  color: var(--swiss-fg);
+  font-family: var(--swiss-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: var(--swiss-muted);
+}
+body[data-theme="swiss"] .statusbar-cell {
+  padding: 0 16px;
+  border: none;
+  border-color: transparent;
+  box-shadow: none;
+  background: transparent;
+  border-right: 2px solid var(--swiss-fg);
+}
+body[data-theme="swiss"] .statusbar-cell:last-child { border-right: none; }
+body[data-theme="swiss"] .statusbar-cell:first-child { flex: 1; }
+
+body[data-theme="swiss"] .hit-counter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font-family: var(--swiss-font);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--swiss-fg);
+  animation: none;
+  border-right: none;
+  letter-spacing: 0.1em;
+}
+
+body[data-theme="swiss"] .color-squares { display: none; }
+
+/* --- Page Sections --- */
+body[data-theme="swiss"] .page-90s { padding: 0; }
+
+body[data-theme="swiss"] .page-header-90s {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 48px;
+  padding-bottom: 24px;
+  border-bottom: 4px solid var(--swiss-fg);
+}
+body[data-theme="swiss"] .page-header-90s h1 {
+  font-size: 48px;
+  text-transform: uppercase;
+  text-shadow: none;
+  letter-spacing: -0.04em;
+  line-height: 1.0;
+}
+body[data-theme="swiss"] .page-header-90s .subtitle {
+  font-size: 12px;
+  color: rgba(0,0,0,0.5);
+  letter-spacing: 0.02em;
+  margin-top: 8px;
+}
+
+body[data-theme="swiss"] .text-rainbow {
+  animation: none;
+  font-family: var(--swiss-font);
+  font-weight: 900;
+  color: var(--swiss-fg);
+}
+
+/* --- Buttons --- */
+body[data-theme="swiss"] .btn90 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: 2px solid var(--swiss-fg);
+  border-color: var(--swiss-fg);
+  box-shadow: none;
+  background: var(--swiss-bg);
+  color: var(--swiss-fg);
+  font-family: var(--swiss-font);
+  font-weight: 700;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background 0.15s ease-out, color 0.15s ease-out;
+}
+body[data-theme="swiss"] .btn90:hover {
+  background: var(--swiss-fg);
+  color: var(--swiss-bg);
+  text-decoration: none;
+}
+body[data-theme="swiss"] .btn90:active {
+  transform: none;
+  border-color: var(--swiss-fg);
+  box-shadow: none;
+}
+body[data-theme="swiss"] .btn90:focus-visible {
+  outline: 2px solid var(--swiss-accent);
+  outline-offset: 2px;
+}
+
+body[data-theme="swiss"] .btn90-primary {
+  background: var(--swiss-fg);
+  color: var(--swiss-bg);
+  border-color: var(--swiss-fg);
+}
+body[data-theme="swiss"] .btn90-primary:hover {
+  background: var(--swiss-accent);
+  color: var(--swiss-bg);
+  border-color: var(--swiss-accent);
+}
+
+body[data-theme="swiss"] .btn90-danger {
+  background: var(--swiss-bg);
+  color: var(--swiss-accent);
+  border-color: var(--swiss-accent);
+}
+body[data-theme="swiss"] .btn90-danger:hover {
+  background: var(--swiss-accent);
+  color: var(--swiss-bg);
+  border-color: var(--swiss-accent);
+}
+
+body[data-theme="swiss"] .btn90-success {
+  background: var(--swiss-bg);
+  color: var(--swiss-fg);
+  border-color: var(--swiss-fg);
+}
+body[data-theme="swiss"] .btn90-success:hover {
+  background: var(--swiss-fg);
+  color: var(--swiss-bg);
+}
+
+body[data-theme="swiss"] .btn90-sm { padding: 6px 14px; font-size: 10px; }
+
+body[data-theme="swiss"] .btn90:disabled {
+  color: rgba(0,0,0,0.25);
+  text-shadow: none;
+  cursor: default;
+  background: var(--swiss-muted);
+  border-color: rgba(0,0,0,0.15);
+  box-shadow: none;
+}
+body[data-theme="swiss"] .btn90:disabled:hover {
+  background: var(--swiss-muted);
+  color: rgba(0,0,0,0.25);
+}
+body[data-theme="swiss"] .btn90:disabled:active { transform: none; }
+
+/* --- Pager --- */
+body[data-theme="swiss"] .pager90 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 16px 0;
+  border: none;
+  border-top: 2px solid var(--swiss-fg);
+  box-shadow: none;
+  background: transparent;
+  margin-top: 24px;
+}
+body[data-theme="swiss"] .pager90-status {
+  flex: 1;
+  text-align: center;
+  font-family: var(--swiss-font);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--swiss-fg);
+  min-width: 160px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* --- Window Card → Swiss Panel --- */
+body[data-theme="swiss"] .win-card {
+  border: 2px solid var(--swiss-fg);
+  border-color: var(--swiss-fg);
+  box-shadow: none;
+  background: var(--swiss-bg);
+  margin-bottom: 24px;
+}
+body[data-theme="swiss"] .win-card-title {
+  background: var(--swiss-fg);
+  color: var(--swiss-bg);
+  font-weight: 700;
+  font-size: 10px;
+  padding: 10px 16px;
+  font-family: var(--swiss-font);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+body[data-theme="swiss"] .win-card-body {
+  border: none;
+  border-color: transparent;
+  box-shadow: none;
+  background: var(--swiss-bg);
+  padding: 24px;
+  margin: 0;
+}
+body[data-theme="swiss"] .win-card-body-yellow {
+  background: var(--swiss-muted);
+}
+
+/* --- Tables --- */
+body[data-theme="swiss"] .table90 {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  border: none;
+}
+body[data-theme="swiss"] .table90 th {
+  background: transparent;
+  color: var(--swiss-fg);
+  font-weight: 700;
+  padding: 12px 16px;
+  text-align: left;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  border-right: none;
+  border-bottom: 4px solid var(--swiss-fg);
+}
+body[data-theme="swiss"] .table90 th:last-child { border-right: none; }
+body[data-theme="swiss"] .table90 td {
+  padding: 12px 16px;
+  border-right: none;
+  border-bottom: 1px solid rgba(0,0,0,0.08);
+  vertical-align: middle;
+  font-size: 13px;
+}
+body[data-theme="swiss"] .table90 td:last-child { border-right: none; }
+body[data-theme="swiss"] .table90 tbody tr:nth-child(even) { background: transparent; }
+body[data-theme="swiss"] .table90 tbody tr:nth-child(odd) { background: transparent; }
+body[data-theme="swiss"] .table90 tbody tr:hover { background: var(--swiss-muted); }
+body[data-theme="swiss"] .table90 a {
+  color: var(--swiss-fg);
+  border-bottom: 2px solid var(--swiss-accent);
+}
+body[data-theme="swiss"] .table90 a:hover { color: var(--swiss-accent); border-bottom-color: transparent; }
+
+body[data-theme="swiss"] .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* --- Badges --- */
+body[data-theme="swiss"] .badge90 {
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 2px solid var(--swiss-fg);
+  font-family: var(--swiss-font);
+}
+body[data-theme="swiss"] .badge90-on {
+  background: var(--swiss-fg);
+  color: var(--swiss-bg);
+  border-color: var(--swiss-fg);
+}
+body[data-theme="swiss"] .badge90-off {
+  background: transparent;
+  color: var(--swiss-fg);
+  border-color: rgba(0,0,0,0.25);
+}
+body[data-theme="swiss"] .badge90-new {
+  background: var(--swiss-accent);
+  color: var(--swiss-bg);
+  border-color: var(--swiss-accent);
+  animation: none;
+  font-family: var(--swiss-font);
+}
+body[data-theme="swiss"] .badge90-action {
+  background: transparent;
+  color: var(--swiss-fg);
+  border-color: var(--swiss-fg);
+}
+
+/* --- Forms --- */
+body[data-theme="swiss"] .form90 {
+  border: 2px solid var(--swiss-fg);
+  border-color: var(--swiss-fg);
+  box-shadow: none;
+  background: var(--swiss-bg);
+  padding: 0;
+}
+
+body[data-theme="swiss"] .form90-inner {
+  border: none;
+  border-color: transparent;
+  box-shadow: none;
+  background: var(--swiss-bg);
+  padding: 32px;
+}
+
+body[data-theme="swiss"] .section-title90 {
+  font-family: var(--swiss-font);
+  font-weight: 900;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--swiss-accent);
+  margin: 32px 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--swiss-fg);
+  letter-spacing: 0.12em;
+}
+body[data-theme="swiss"] .section-title90:first-child { margin-top: 0; }
+
+body[data-theme="swiss"] .field90 {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+body[data-theme="swiss"] .field90 > label {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--swiss-fg);
+  text-align: left;
+  padding-right: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+body[data-theme="swiss"] .field-hint90 {
+  grid-column: 2;
+  font-size: 11px;
+  color: rgba(0,0,0,0.4);
+  font-family: var(--swiss-font);
+  margin-top: 0;
+}
+
+body[data-theme="swiss"] input,
+body[data-theme="swiss"] select,
+body[data-theme="swiss"] textarea {
+  font-family: var(--swiss-font);
+  font-size: 14px;
+  padding: 8px 0;
+  border: none;
+  border-bottom: 2px solid var(--swiss-fg);
+  border-color: transparent transparent var(--swiss-fg) transparent;
+  box-shadow: none;
+  background: transparent;
+  color: var(--swiss-fg);
+  width: 100%;
+  max-width: 480px;
+  transition: border-color 0.15s ease-out;
+}
+body[data-theme="swiss"] select {
+  border: 2px solid var(--swiss-fg);
+  padding: 8px 12px;
+  background: var(--swiss-bg);
+  cursor: pointer;
+}
+body[data-theme="swiss"] textarea {
+  font-family: 'Inter', monospace;
+  font-size: 13px;
+  max-width: 100%;
+  line-height: 1.6;
+  border: 2px solid var(--swiss-fg);
+  padding: 12px;
+}
+body[data-theme="swiss"] input:focus,
+body[data-theme="swiss"] select:focus,
+body[data-theme="swiss"] textarea:focus {
+  outline: none;
+  border-color: var(--swiss-accent);
+}
+body[data-theme="swiss"] input:disabled {
+  background: var(--swiss-muted);
+  color: rgba(0,0,0,0.35);
+  border-color: rgba(0,0,0,0.1);
+}
+body[data-theme="swiss"] input::placeholder,
+body[data-theme="swiss"] textarea::placeholder {
+  color: rgba(0,0,0,0.3);
+}
+
+/* --- Status / Output --- */
+body[data-theme="swiss"] .status90 {
+  font-family: var(--swiss-font);
+  font-size: 12px;
+  white-space: pre-wrap;
+  background: var(--swiss-muted);
+  color: var(--swiss-fg);
+  padding: 16px 20px;
+  border: 2px solid var(--swiss-fg);
+  border-color: var(--swiss-fg);
+  box-shadow: none;
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+}
+body[data-theme="swiss"] .status90-err {
+  color: var(--swiss-accent);
+  border-color: var(--swiss-accent);
+}
+
+body[data-theme="swiss"] pre {
+  background: var(--swiss-fg);
+  color: var(--swiss-bg);
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 12px;
+  padding: 20px;
+  border: none;
+  box-shadow: none;
+  overflow: auto;
+  line-height: 1.7;
+}
+body[data-theme="swiss"] code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.88em;
+  background: var(--swiss-muted);
+  padding: 2px 6px;
+  border: none;
+}
+
+body[data-theme="swiss"] .empty90 {
+  text-align: left;
+  padding: 48px 0;
+  color: rgba(0,0,0,0.4);
+  font-style: normal;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+}
+
+body[data-theme="swiss"] .custom-alert-notice {
+  margin-top: 16px;
+  padding: 16px 20px;
+  background: var(--swiss-muted);
+  border: 2px solid var(--swiss-fg);
+  font-size: 12px;
+  color: var(--swiss-fg);
+  letter-spacing: 0.02em;
+}
+
+body[data-theme="swiss"] details summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--swiss-fg);
+  text-decoration: none;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  margin: 16px 0 8px;
+}
+body[data-theme="swiss"] details summary:hover { color: var(--swiss-accent); }
+
+/* --- Construction Stripe → Swiss Section Divider --- */
+body[data-theme="swiss"] .construction-stripe {
+  background: var(--swiss-muted);
+  padding: 12px 20px;
+  font-weight: 700;
+  text-align: left;
+  font-family: var(--swiss-font);
+  font-size: 10px;
+  color: var(--swiss-fg);
+  text-shadow: none;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: none;
+  border-left: 4px solid var(--swiss-accent);
+  margin-bottom: 24px;
+}
+
+/* --- HR Groove → Clean Line --- */
+body[data-theme="swiss"] .hr-groove {
+  border: none;
+  height: 2px;
+  background: var(--swiss-fg);
+  margin: 24px 0;
+}
+
+/* --- Bevel classes neutralized --- */
+body[data-theme="swiss"] .bevel-outset,
+body[data-theme="swiss"] .bevel-inset {
+  border: 2px solid var(--swiss-fg);
+  border-color: var(--swiss-fg);
+  box-shadow: none;
+}
+
+/* --- Theme Switcher --- */
+body[data-theme="swiss"] .theme-switcher {
+  border: 2px solid var(--swiss-fg);
+  background: var(--swiss-bg);
+}
+body[data-theme="swiss"] .theme-switcher button {
+  font-family: var(--swiss-font);
+  border: none;
+  color: var(--swiss-fg);
+  background: transparent;
+}
+body[data-theme="swiss"] .theme-switcher button.active {
+  background: var(--swiss-fg);
+  color: var(--swiss-bg);
+}
+
+/* --- Responsive --- */
+@media (max-width: 860px) {
+  body[data-theme="swiss"] .win95-app { margin: 0; border-left: none; border-right: none; }
+  body[data-theme="swiss"] .win95-menubar { flex-wrap: wrap; }
+  body[data-theme="swiss"] .page-header-90s {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  body[data-theme="swiss"] .page-header-90s h1 { font-size: 36px; }
+  body[data-theme="swiss"] .win95-content { padding: 32px 16px; }
+  body[data-theme="swiss"] .field90 { grid-template-columns: 1fr; gap: 6px; }
+  body[data-theme="swiss"] .field90 > label { text-align: left; padding-right: 0; }
+  body[data-theme="swiss"] .field-hint90 { grid-column: 1; }
+  body[data-theme="swiss"] .table90 { display: block; overflow-x: auto; }
+  body[data-theme="swiss"] .form90-inner { padding: 20px; }
+}
+
+@media (max-width: 480px) {
+  body[data-theme="swiss"] .win95-content { padding: 20px 12px; }
+  body[data-theme="swiss"] .page-header-90s h1 { font-size: 28px; }
+  body[data-theme="swiss"] .row-actions { flex-direction: column; }
+}
+
+/* --- Reduced Motion --- */
+@media (prefers-reduced-motion: reduce) {
+  body[data-theme="swiss"] * {
+    transition-duration: 0s !important;
+  }
+}

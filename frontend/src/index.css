@@ -622,6 +622,35 @@ details summary:hover { color: #ff0000; }
   box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
 }
 
+/* --- Theme Switcher (retro style) --- */
+.theme-switcher {
+  display: inline-flex;
+  border: 2px solid;
+  border-color: #ffffff #808080 #808080 #ffffff;
+  box-shadow: inset -1px -1px 0 #404040, inset 1px 1px 0 #dfdfdf;
+  background: #c0c0c0;
+  overflow: hidden;
+}
+.theme-switcher button {
+  padding: 3px 12px;
+  font-family: "MS Sans Serif", "Segoe UI", Tahoma, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: none;
+  border-right: 1px solid #808080;
+  background: #c0c0c0;
+  color: #000000;
+  cursor: pointer;
+}
+.theme-switcher button:last-child { border-right: none; }
+.theme-switcher button.active {
+  background: #000080;
+  color: #ffffff;
+}
+.theme-switcher button:hover:not(.active) { background: #d0d0d0; }
+
 /* --- Responsive --- */
 @media (max-width: 860px) {
   .win95-app { margin: 0; min-height: 100vh; }

@@ -1,6 +1,7 @@
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import Marquee from 'react-fast-marquee';
 import { keycloak, hasRole } from './auth/keycloak.js';
+import ThemeSwitcher from './theme/ThemeSwitcher.jsx';
 import RuleList from './pages/RuleList.jsx';
 import RuleEditor from './pages/RuleEditor.jsx';
 import WebhookSettings from './pages/WebhookSettings.jsx';
@@ -29,6 +30,7 @@ export default function App() {
         <div className="win95-titlebar-text">
           ElastAlert² Rule Console — [{username}]
         </div>
+        <ThemeSwitcher />
         <div className="win95-titlebar-btns">
           <button className="win95-titlebar-btn" title="Minimize">_</button>
           <button className="win95-titlebar-btn" title="Maximize">□</button>
