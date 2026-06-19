@@ -27,51 +27,81 @@ export default function RuleList() {
   };
 
   const test = async (r) => {
-    say(`테스트 실행 중: ${r.name} …`);
+    say(`C:\\ELASTALERT\\TEST.EXE — ${r.name} 실행 중...`);
     try {
       const res = await api.testRule(r.id, true);
-      say(`테스트 ${res.ok ? '성공 ✓' : '실패 ✗'} (exit ${res.code})\n${res.stdout || res.stderr}`, !res.ok);
+      say(`테스트 ${res.ok ? '성공' : '실패'} (exit ${res.code})\n${res.stdout || res.stderr}`, !res.ok);
     } catch (e) { say(e.message, true); }
   };
 
   return (
-    <div className="page">
-      <div className="page-head">
+    <div className="page-90s">
+      <div className="page-header-90s">
         <div>
-          <h1 className="page-title">Rules</h1>
-          <p className="page-sub">알림 룰을 만들고 활성화 · 테스트합니다.</p>
+          <h1><span className="text-rainbow">Rules</span></h1>
+          <div className="subtitle">알림 룰을 만들고 활성화 · 테스트합니다.</div>
         </div>
-        <button className="btn-primary" onClick={() => navigate('/rules/new')}>+ 새 Rule</button>
+        <button className="btn90 btn90-primary" onClick={() => navigate('/rules/new')}>
+          ✚ 새 Rule
+        </button>
       </div>
 
-      {msg && <div className={`status ${err ? 'status-err' : ''}`}>{msg}</div>}
+      {msg && <div className={`status90 ${err ? 'status90-err' : ''}`}>{msg}</div>}
 
-      <table className="table">
-        <thead>
-          <tr>
-            <th>이름</th><th>템플릿</th><th>Alerter</th><th>상태</th><th>소유자</th><th>액션</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rules.map((r) => (
-            <tr key={r.id}>
-              <td><Link to={`/rules/${r.id}`}>{r.name}</Link></td>
-              <td>{r.template}</td>
-              <td>{r.alerter}</td>
-              <td><span className={`badge ${r.enabled ? 'badge-on' : 'badge-off'}`}>{r.enabled ? '활성' : '비활성'}</span></td>
-              <td>{r.owner?.username || '—'}</td>
-              <td>
-                <div className="row-actions">
-                  <button className="btn btn-sm" onClick={() => toggle(r)}>{r.enabled ? '비활성화' : '활성화'}</button>
-                  <button className="btn btn-sm" onClick={() => test(r)}>테스트</button>
-                  <button className="btn-danger btn-sm" onClick={() => remove(r)}>삭제</button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {rules.length === 0 && !err && <p className="empty">아직 룰이 없습니다. <Link to="/rules/new">새 Rule</Link> 을 만들어 보세요.</p>}
+      <div className="construction-stripe">
+        ⚠ UNDER CONSTRUCTION ⚠ — 룰을 만들고 Slack / Mattermost 로 알림을 보내세요!
+      </div>
+
+      <div className="win-card">
+        <div className="win-card-title">📋 Rule Database — {rules.length} entries</div>
+        <div className="win-card-body" style={{ padding: 0 }}>
+          <table className="table90">
+            <thead>
+              <tr>
+                <th>이름</th>
+                <th>템플릿</th>
+                <th>Alerter</th>
+                <th>상태</th>
+                <th>소유자</th>
+                <th>액션</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rules.map((r) => (
+                <tr key={r.id}>
+                  <td><Link to={`/rules/${r.id}`}>{r.name}</Link></td>
+                  <td style={{ fontFamily: '"Courier New", monospace', fontSize: 12 }}>{r.template}</td>
+                  <td>{r.alerter}</td>
+                  <td>
+                    <span className={`badge90 ${r.enabled ? 'badge90-on' : 'badge90-off'}`}>
+                      {r.enabled ? 'ON' : 'OFF'}
+                    </span>
+                  </td>
+                  <td>{r.owner?.username || '—'}</td>
+                  <td>
+                    <div className="row-actions">
+                      <button className="btn90 btn90-sm" onClick={() => toggle(r)}>
+                        {r.enabled ? '비활성화' : '활성화'}
+                      </button>
+                      <button className="btn90 btn90-sm btn90-success" onClick={() => test(r)}>
+                        테스트
+                      </button>
+                      <button className="btn90 btn90-sm btn90-danger" onClick={() => remove(r)}>
+                        삭제
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {rules.length === 0 && !err && (
+            <div className="empty90">
+              아직 룰이 없습니다. <Link to="/rules/new">✚ 새 Rule</Link> 을 만들어 보세요.
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
