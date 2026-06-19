@@ -25,7 +25,7 @@ export default function WebhookSettings() {
     <div className="page-90s">
       <div className="page-header-90s">
         <div>
-          <h1>⚙ Webhook 설정</h1>
+          <h1>Webhook 설정</h1>
           <div className="subtitle">관리자 전용 — developer가 override를 비워두면 여기 기본값을 사용합니다.</div>
         </div>
       </div>
@@ -33,27 +33,26 @@ export default function WebhookSettings() {
       {msg && <div className="status90">{msg}</div>}
 
       <div className="win-card">
-        <div className="win-card-title">🔗 기본 Webhook URL</div>
-        <div className="win-card-body win-card-body-yellow">
+        <div className="win-card-title">기본 Webhook URL</div>
+        <div className="win-card-body">
           {['mattermost', 'slack'].map((type) => (
             <div className="field90" key={type}>
               <label>{type.toUpperCase()}</label>
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div style={{ display: 'flex', gap: 8, maxWidth: 460 }}>
                 <input
                   value={form[type]}
                   onChange={(e) => setForm((f) => ({ ...f, [type]: e.target.value }))}
                   placeholder="https://…/hooks/xxxx"
-                  style={{ maxWidth: 340 }}
                 />
-                <button className="btn90 btn90-success btn90-sm" onClick={() => save(type)}>
+                <button className="btn90 btn90-primary btn90-sm" onClick={() => save(type)}>
                   저장
                 </button>
               </div>
             </div>
           ))}
           <hr className="hr-groove" />
-          <p style={{ fontSize: 12, color: '#808080', fontFamily: '"Courier New", monospace' }}>
-            C:\ELASTALERT\WEBHOOK.CFG — developer 는 rule별 webhook override를 비워두면 여기 설정된 기본값을 사용합니다.
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>
+            developer 는 rule별 webhook override를 비워두면 여기 설정된 기본값을 사용합니다.
           </p>
         </div>
       </div>

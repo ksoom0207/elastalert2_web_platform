@@ -40,7 +40,7 @@ export default function RuleList() {
   };
 
   const test = async (r) => {
-    say(`C:\\ELASTALERT\\TEST.EXE — ${r.name} 실행 중...`);
+    say(`${r.name} 테스트 실행 중…`);
     try {
       const res = await api.testRule(r.id, true);
       say(`테스트 ${res.ok ? '성공' : '실패'} (exit ${res.code})\n${res.stdout || res.stderr}`, !res.ok);
@@ -55,22 +55,18 @@ export default function RuleList() {
     <div className="page-90s">
       <div className="page-header-90s">
         <div>
-          <h1><span className="text-rainbow">Rules</span></h1>
+          <h1>Rules</h1>
           <div className="subtitle">알림 룰을 만들고 활성화 · 테스트합니다.</div>
         </div>
         <button className="btn90 btn90-primary" onClick={() => navigate('/rules/new')}>
-          ✚ 새 Rule
+          + 새 Rule
         </button>
       </div>
 
       {msg && <div className={`status90 ${err ? 'status90-err' : ''}`}>{msg}</div>}
 
-      <div className="construction-stripe">
-        ⚠ UNDER CONSTRUCTION ⚠ — 룰을 만들고 Slack / Mattermost 로 알림을 보내세요!
-      </div>
-
       <div className="win-card">
-        <div className="win-card-title">📋 Rule Database — {total} entries</div>
+        <div className="win-card-title">전체 룰 <span className="badge90 badge90-action">{total}</span></div>
         <div className="win-card-body" style={{ padding: 0 }}>
           <table className="table90">
             <thead>
@@ -87,7 +83,7 @@ export default function RuleList() {
               {rules.map((r) => (
                 <tr key={r.id}>
                   <td><Link to={`/rules/${r.id}`}>{r.name}</Link></td>
-                  <td style={{ fontFamily: '"Courier New", monospace', fontSize: 12 }}>{r.template}</td>
+                  <td><code>{r.template}</code></td>
                   <td>{r.alerter}</td>
                   <td>
                     <span className={`badge90 ${r.enabled ? 'badge90-on' : 'badge90-off'}`}>
@@ -114,7 +110,7 @@ export default function RuleList() {
           </table>
           {rules.length === 0 && !err && (
             <div className="empty90">
-              아직 룰이 없습니다. <Link to="/rules/new">✚ 새 Rule</Link> 을 만들어 보세요.
+              아직 룰이 없습니다. <Link to="/rules/new">새 Rule</Link> 을 만들어 보세요.
             </div>
           )}
         </div>
@@ -122,13 +118,13 @@ export default function RuleList() {
 
       {total > 0 && (
         <div className="pager90">
-          <button className="btn90 btn90-sm" disabled={page <= 1} onClick={() => setPage(1)}>◀◀ 처음</button>
-          <button className="btn90 btn90-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>◀ 이전</button>
+          <button className="btn90 btn90-sm" disabled={page <= 1} onClick={() => setPage(1)}>« 처음</button>
+          <button className="btn90 btn90-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>‹ 이전</button>
           <span className="pager90-status">
-            {from}–{to} / {total}  ·  PAGE {page} OF {totalPages}
+            {from}–{to} / {total} · {page} / {totalPages}
           </span>
-          <button className="btn90 btn90-sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>다음 ▶</button>
-          <button className="btn90 btn90-sm" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>끝 ▶▶</button>
+          <button className="btn90 btn90-sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>다음 ›</button>
+          <button className="btn90 btn90-sm" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>끝 »</button>
         </div>
       )}
     </div>

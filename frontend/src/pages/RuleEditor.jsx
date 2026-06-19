@@ -33,7 +33,7 @@ export default function RuleEditor() {
   const save = async () => {
     try {
       const saved = id ? await api.updateRule(id, form) : await api.createRule(form);
-      setMsg('C:\\ELASTALERT\\SAVE.EXE — 저장 완료!');
+      setMsg('저장 완료!');
       if (!id) navigate(`/rules/${saved.id}`);
     } catch (e) { setMsg(e.message); }
   };
@@ -42,14 +42,14 @@ export default function RuleEditor() {
     <div className="page-90s">
       <div className="page-header-90s">
         <div>
-          <h1>{id ? '📝 Rule 수정' : '✚ 새 Rule'}</h1>
+          <h1>{id ? 'Rule 수정' : '새 Rule'}</h1>
           <div className="subtitle">
             템플릿으로 빠르게 만들거나 Custom YAML로 직접 작성합니다.
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
-          <button className="btn90" onClick={() => navigate('/')}>◀ 목록</button>
-          <button className="btn90 btn90-primary" onClick={save}>💾 저장</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="btn90" onClick={() => navigate('/')}>‹ 목록</button>
+          <button className="btn90 btn90-primary" onClick={save}>저장</button>
         </div>
       </div>
 
