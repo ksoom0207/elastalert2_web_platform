@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import Marquee from 'react-fast-marquee';
 import { keycloak, hasRole } from './auth/keycloak.js';
+import { useTheme } from './theme/ThemeContext.jsx';
 import ThemeSwitcher from './theme/ThemeSwitcher.jsx';
+import Minesweeper from './components/Minesweeper.jsx';
 import RuleList from './pages/RuleList.jsx';
 import RuleEditor from './pages/RuleEditor.jsx';
 import WebhookSettings from './pages/WebhookSettings.jsx';
@@ -11,6 +14,8 @@ export default function App() {
   const isAdmin = hasRole('admin');
   const username = keycloak.tokenParsed?.preferred_username || 'user';
   const location = useLocation();
+  const { theme } = useTheme();
+  const [showMines, setShowMines] = useState(false);
 
   const pages = {
     '/': 'Rules',
@@ -32,7 +37,7 @@ export default function App() {
         </div>
         <ThemeSwitcher />
         <div className="win95-titlebar-btns">
-          <button className="win95-titlebar-btn" title="Minimize">_</button>
+          <button className="win95-titlebar-btn" title="Minimize" onClick={() => theme === 'retro' && setShowMines(true)}>_</button>
           <button className="win95-titlebar-btn" title="Maximize">□</button>
           <button className="win95-titlebar-btn" onClick={() => keycloak.logout()} title="로그아웃">✕</button>
         </div>
@@ -101,6 +106,8 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {showMines && <Minesweeper onClose={() => setShowMines(false)} />}
     </div>
   );
 }
