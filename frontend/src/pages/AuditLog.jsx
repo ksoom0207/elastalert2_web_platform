@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client.js';
 
+const PAGE_SIZE = 25;
+
 export default function AuditLog() {
-  const [logs, setLogs] = useState([]);
+  const [items, setItems] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    api.audit(200).then(setLogs).catch((e) => setMsg(e.message));
-  }, []);
+    api.audit(page, PAGE_SIZE)
+      .then((res) => { setItems(res.items); setTotal(res.total); })
+      .catch((e) => setMsg(e.message));
+  }, [page]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const from = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const to = Math.min(page * PAGE_SIZE, total);
 
   return (
     <div className="page-90s">
@@ -21,7 +31,7 @@ export default function AuditLog() {
       {msg && <div className="status90 status90-err">{msg}</div>}
 
       <div className="win-card">
-        <div className="win-card-title">📊 Activity Log — {logs.length} records</div>
+        <div className="win-card-title">📊 Activity Log — {total} records</div>
         <div className="win-card-body" style={{ padding: 0 }}>
           <table className="table90">
             <thead>
@@ -34,7 +44,7 @@ export default function AuditLog() {
               </tr>
             </thead>
             <tbody>
-              {logs.map((l) => (
+              {items.map((l) => (
                 <tr key={l.id}>
                   <td style={{ fontFamily: '"Courier New", monospace', fontSize: 12, whiteSpace: 'nowrap' }}>
                     {new Date(l.createdAt).toLocaleString()}
@@ -47,9 +57,21 @@ export default function AuditLog() {
               ))}
             </tbody>
           </table>
-          {logs.length === 0 && !msg && <div className="empty90">기록이 없습니다.</div>}
+          {items.length === 0 && !msg && <div className="empty90">기록이 없습니다.</div>}
         </div>
       </div>
+
+      {total > 0 && (
+        <div className="pager90">
+          <button className="btn90 btn90-sm" disabled={page <= 1} onClick={() => setPage(1)}>◀◀ 처음</button>
+          <button className="btn90 btn90-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>◀ 이전</button>
+          <span className="pager90-status">
+            {from}–{to} / {total}  ·  PAGE {page} OF {totalPages}
+          </span>
+          <button className="btn90 btn90-sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}>다음 ▶</button>
+          <button className="btn90 btn90-sm" disabled={page >= totalPages} onClick={() => setPage(totalPages)}>끝 ▶▶</button>
+        </div>
+      )}
     </div>
   );
 }

@@ -30,5 +30,5 @@ export const api = {
   disableRule: (id) => request(`/rules/${id}/disable`, { method: 'POST' }),
   testRule: (id, sendAlert = true) =>
     request(`/rules/${id}/test`, { method: 'POST', body: JSON.stringify({ sendAlert }) }),
-  audit: (limit = 100) => request(`/audit?limit=${limit}`),
+  audit: (page = 1, pageSize = 25) => request(`/audit?page=${page}&pageSize=${pageSize}`),
 };
