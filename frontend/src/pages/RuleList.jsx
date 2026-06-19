@@ -14,7 +14,12 @@ export default function RuleList() {
 
   const load = () =>
     api.rules(page, PAGE_SIZE)
-      .then((res) => { setRules(res.items); setTotal(res.total); })
+      .then((res) => {
+        const items = Array.isArray(res) ? res : res.items || [];
+        const count = Array.isArray(res) ? res.length : res.total || 0;
+        setRules(items);
+        setTotal(count);
+      })
       .catch((e) => say(e.message, true));
 
   useEffect(() => { load(); }, [page]);

@@ -77,7 +77,7 @@ export default function RuleEditor() {
               <Field label="Index pattern">
                 <input value={form.esIndex} onChange={(e) => set('esIndex', e.target.value)} placeholder="filebeat-*" />
               </Field>
-              {tpl?.fields
+              {(tpl?.fields || [])
                 .filter((fld) => {
                   if (!fld.showWhen) return true;
                   const selectedType = form.params.ruleType ?? tpl.fields.find((f) => f.name === 'ruleType')?.default;
