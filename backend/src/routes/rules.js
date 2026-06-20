@@ -28,7 +28,7 @@ const ruleSchema = z.object({
     .min(1)
     .regex(/^[a-zA-Z0-9_-]+$/, '영문/숫자/-/_ 만 허용'),
   description: z.string().optional(),
-  template: z.enum(['K8S_ERROR', 'APM_500', 'SERVER_METRIC', 'CUSTOM']),
+  template: z.enum(['K8S_ERROR', 'APM_500', 'SERVER_METRIC', 'META_NON_JSON_LOG', 'CUSTOM']),
   esIndex: z.string().optional().default(''),
   params: z.record(z.any()).optional().default({}),
   alerter: z.enum(['slack', 'mattermost']),

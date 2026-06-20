@@ -212,6 +212,68 @@ export const TEMPLATES = {
     },
   },
 
+  META_NON_JSON_LOG: {
+    key: 'META_NON_JSON_LOG',
+    label: 'Meta: 비JSON 로그 감지 (마이그레이션 추적용)',
+    description:
+      'message 필드가 "{"로 시작하지 않는 로그를 감지해 알람. JSON 로깅 가이드 미준수 서비스 추적용.',
+    defaultIndex: '.ds-logs-kubernetes.container_logs-default-*',
+    fields: [
+      { name: 'ruleType', label: 'Rule Type', type: 'select', required: true, default: 'frequency', options: RULE_TYPE_OPTIONS },
+      { name: 'namespace', label: 'Kubernetes namespace (선택)', type: 'text', required: false },
+      { name: 'app', label: '애플리케이션 라벨 (kubernetes.labels.app, 선택)', type: 'text', required: false },
+      { name: 'excludePatterns', label: '제외 패턴 (쉼표 구분, message에 포함되면 무시)', type: 'text', required: false,
+        default: 'GET /,POST /,HTTP/1.1' },
+      ...RULE_TYPE_FIELDS,
+      { name: 'alertText', label: 'alert_text (알림 본문 템플릿)', type: 'textarea', required: false,
+        default: '⚠ *비JSON 로그 감지* — JSON 로깅 가이드 미준수\n\n📅 발생 시각: {0}\n🐳 파드: {1}\n📦 네임스페이스: {2}\n🏷️ 앱: {3}\n\n📋 메시지:\n{4}\n\n➡ docs/JSON_LOGGING_GUIDE.md 참고하여 JSON 포맷으로 마이그레이션 부탁드립니다.' },
+      { name: 'alertTextArgs', label: 'alert_text_args (쉼표 구분)', type: 'text', required: false,
+        default: 'timestamp_kst,kubernetes.pod.name,kubernetes.namespace,kubernetes.labels.app,message' },
+    ],
+    build(p) {
+      // `message:/{.*/` 는 message가 JSON 객체로 시작하는 것을 의미.
+      // NOT으로 감싸 비JSON만 잡고, 빈 message는 must_not exists로 추가 제외.
+      const filters = [
+        {
+          bool: {
+            must: [{ exists: { field: 'message' } }],
+            must_not: [{ query_string: { query: 'message:/\\{.*/' } }],
+          },
+        },
+      ];
+      if (p.namespace) filters.push({ term: { 'kubernetes.namespace': p.namespace } });
+      if (p.app) filters.push({ term: { 'kubernetes.labels.app': p.app } });
+
+      const excludes = (p.excludePatterns || '')
+        .split(',').map((s) => s.trim()).filter(Boolean);
+      if (excludes.length > 0) {
+        filters.push({
+          bool: {
+            must_not: excludes.map((kw) => ({ match_phrase: { message: kw } })),
+          },
+        });
+      }
+
+      const rule = {
+        filter: filters,
+        timestamp_field: '@timestamp',
+        timestamp_type: 'iso',
+        match_enhancements: ['kst_enhancer.KSTEnhancement'],
+        alert_text_type: 'alert_text_only',
+      };
+
+      applyRuleType(rule, p);
+
+      rule.alert_text = p.alertText ||
+        '⚠ *비JSON 로그 감지*\n\n📅 발생 시각: {0}\n🐳 파드: {1}\n📦 네임스페이스: {2}\n🏷️ 앱: {3}\n\n📋 메시지:\n{4}';
+      const argsStr = p.alertTextArgs ||
+        'timestamp_kst,kubernetes.pod.name,kubernetes.namespace,kubernetes.labels.app,message';
+      rule.alert_text_args = argsStr.split(',').map((s) => s.trim()).filter(Boolean);
+
+      return rule;
+    },
+  },
+
   CUSTOM: {
     key: 'CUSTOM',
     label: 'Custom (직접 YAML 작성)',
