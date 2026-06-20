@@ -3,7 +3,9 @@
 // Active rules are rendered to YAML files in the shared rules_folder.
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  // native = build host; debian-openssl-3.0.x = node:20-slim (Debian bookworm) runtime.
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {

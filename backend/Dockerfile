@@ -2,8 +2,9 @@ FROM node:20-slim
 
 # docker CLI is needed so the backend can exec elastalert-test-rule inside the
 # ElastAlert2 container for the real-data dry-run "test alarm".
+# openssl + ca-certificates are required by the Prisma query/schema engines.
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends docker.io \
+  && apt-get install -y --no-install-recommends docker.io openssl ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
