@@ -35,13 +35,28 @@ export function renderRuleObject(rule, defaultWebhook) {
   const tpl = TEMPLATES[rule.template];
   if (!tpl) throw new Error(`Unknown template: ${rule.template}`);
 
+  // Merge template-field defaults into params so values shown as UI defaults
+  // (e.g. realertMinutes=5) still apply even if the frontend never persisted
+  // them into rule.params. Explicit user values always win.
+  const params = withDefaults(tpl, rule.params || {});
+
   const base = {
     name: rule.name,
     index: rule.esIndex,
-    ...tpl.build(rule.params || {}),
+    ...tpl.build(params),
     ...buildAlerterBlock(rule.alerter, rule.alerterConfig || {}, defaultWebhook),
   };
   return base;
+}
+
+function withDefaults(tpl, params) {
+  const merged = { ...params };
+  for (const fld of tpl.fields || []) {
+    if (fld.default !== undefined && merged[fld.name] === undefined) {
+      merged[fld.name] = fld.default;
+    }
+  }
+  return merged;
 }
 
 export function renderRuleYaml(rule, defaultWebhook) {
