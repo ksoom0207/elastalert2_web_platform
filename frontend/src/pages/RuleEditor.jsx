@@ -87,14 +87,23 @@ export default function RuleEditor() {
             <>
               <hr className="hr-groove" />
               <div className="section-title90">Elasticsearch</div>
-              <Field label="Index pattern">
-                <input value={form.esIndex} onChange={(e) => set('esIndex', e.target.value)} placeholder="filebeat-*" />
-              </Field>
+              {!tpl?.overridesIndex && (
+                <Field label="Index pattern">
+                  <input value={form.esIndex} onChange={(e) => set('esIndex', e.target.value)} placeholder="filebeat-*" />
+                </Field>
+              )}
               {(tpl?.fields || [])
                 .filter((fld) => {
                   if (!fld.showWhen) return true;
-                  const selectedType = form.params.ruleType ?? tpl.fields.find((f) => f.name === 'ruleType')?.default;
-                  return fld.showWhen.includes(selectedType);
+                  // showWhen accepts two forms:
+                  //   ['a','b']                          -> gated on params.ruleType (legacy)
+                  //   { field: 'metricType', values:[…] } -> gated on any named param
+                  const src = Array.isArray(fld.showWhen)
+                    ? { field: 'ruleType', values: fld.showWhen }
+                    : fld.showWhen;
+                  const current = form.params[src.field]
+                    ?? tpl.fields.find((f) => f.name === src.field)?.default;
+                  return src.values.includes(current);
                 })
                 .map((fld) => (
                 <Field key={fld.name} label={fld.label}>

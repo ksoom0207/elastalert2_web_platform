@@ -191,24 +191,77 @@ export const TEMPLATES = {
     key: 'SERVER_METRIC',
     label: '서버 메트릭 한계치 알람',
     description: '지정 메트릭이 임계치를 초과하면 알림 (metric_aggregation)',
-    defaultIndex: 'metricbeat-*',
+    // Template overrides the top-level Index pattern with per-metric-type mapping below,
+    // so the frontend hides its esIndex input for this template.
+    overridesIndex: true,
+    defaultIndex: '.ds-metrics-system.cpu-default-*',
     fields: [
-      { name: 'metricField', label: '메트릭 필드', type: 'text', default: 'system.cpu.total.pct', required: true },
-      { name: 'threshold', label: '임계치(초과 시 알람)', type: 'number', default: 0.9, required: true },
-      { name: 'host', label: 'host.name (선택)', type: 'text', required: false },
-      { name: 'bufferMinutes', label: '집계 버퍼(분)', type: 'number', default: 5, required: true },
+      { name: 'metricType', label: '메트릭 종류', type: 'select', required: true, default: 'CPU',
+        options: [
+          { value: 'CPU', label: 'CPU 사용률' },
+          { value: 'MEM', label: '메모리 사용률' },
+          { value: 'DISK', label: '디스크 사용률' },
+          { value: 'CUSTOM', label: '기타 (직접 입력)' },
+        ] },
+      // Shown only for CUSTOM
+      { name: 'customIndex', label: '인덱스 패턴 (직접)', type: 'text', required: true,
+        default: '.ds-metrics-*', showWhen: { field: 'metricType', values: ['CUSTOM'] } },
+      { name: 'customField', label: '메트릭 필드 (직접)', type: 'text', required: true,
+        default: 'system.cpu.total.norm.pct', showWhen: { field: 'metricType', values: ['CUSTOM'] } },
+      // Shown only for DISK — ES `regexp` query (Lucene syntax, no lookaheads).
+      { name: 'diskMountRegex', label: '마운트 포인트 regex (빈값=전체)', type: 'text', required: false,
+        default: '/(root|data|var|home|opt)(/.*)?',
+        showWhen: { field: 'metricType', values: ['DISK'] } },
+      { name: 'threshold', label: '임계치 (0~1, 초과 시 알람)', type: 'number', default: 0.9, required: true },
+      { name: 'host', label: 'host.name (선택, 특정 호스트만)', type: 'text', required: false },
+      { name: 'bufferMinutes', label: '집계 시간 (분)', type: 'number', default: 5, required: true },
+      { name: 'realertMinutes', label: '동일 알람 반복 방지 (분)', type: 'number', default: 15, required: false },
+      { name: 'alertText', label: 'alert_text (알림 본문)', type: 'textarea', required: false,
+        default: '⚠ *서버 메트릭 임계치 초과*\n\n📅 발생 시각: {0}\n🖥️ 호스트: {1}\n📊 지표: {2}\n📈 값: {3}' },
+      { name: 'alertTextArgs', label: 'alert_text_args (쉼표 구분)', type: 'text', required: false,
+        default: 'timestamp_kst,host.name,metric_agg_key,metric_agg_value' },
     ],
     build(p) {
+      const MAPPING = {
+        CPU:  { index: '.ds-metrics-system.cpu-default-*',        field: 'system.cpu.total.norm.pct' },
+        MEM:  { index: '.ds-metrics-system.memory-default-*',     field: 'system.memory.actual.used.pct' },
+        DISK: { index: '.ds-metrics-system.filesystem-default-*', field: 'system.filesystem.used.pct',
+                mountField: 'system.filesystem.mount_point' },
+      };
+      const type = p.metricType || 'CPU';
+      const mapping = MAPPING[type];
+      const index = mapping ? mapping.index : (p.customIndex || '.ds-metrics-*');
+      const field = mapping ? mapping.field : (p.customField || 'system.cpu.total.norm.pct');
+
       const filters = [];
       if (p.host) filters.push({ term: { 'host.name': p.host } });
-      return {
+      if (type === 'DISK' && p.diskMountRegex) {
+        filters.push({ regexp: { [mapping.mountField]: p.diskMountRegex } });
+      }
+
+      const rule = {
+        // Overrides the top-level `index` set from rule.esIndex (see renderRuleObject).
+        index,
         type: 'metric_aggregation',
-        metric_agg_key: p.metricField || 'system.cpu.total.pct',
+        metric_agg_key: field,
         metric_agg_type: 'avg',
         buffer_time: { minutes: Number(p.bufferMinutes ?? 5) },
         max_threshold: Number(p.threshold ?? 0.9),
+        match_enhancements: ['kst_enhancer.KSTEnhancement'],
         filter: filters,
       };
+
+      if (p.realertMinutes) rule.realert = { minutes: Number(p.realertMinutes) };
+
+      if (p.alertText) {
+        rule.alert_text_type = 'alert_text_only';
+        rule.alert_text = p.alertText;
+        if (p.alertTextArgs) {
+          rule.alert_text_args = p.alertTextArgs.split(',').map((s) => s.trim()).filter(Boolean);
+        }
+      }
+
+      return rule;
     },
   },
 
@@ -293,6 +346,7 @@ export function listTemplates() {
     label: t.label,
     description: t.description,
     defaultIndex: t.defaultIndex,
+    overridesIndex: !!t.overridesIndex,
     fields: t.fields,
   }));
 }
