@@ -16,7 +16,15 @@ export default function RuleEditor() {
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    api.templates().then(setTemplates);
+    api.templates().then((tpls) => {
+      setTemplates(tpls);
+      // New rule: seed params with defaults of the initial template so
+      // undisplayed defaults (e.g. ruleType='frequency') actually reach the backend.
+      if (!id) {
+        const initial = tpls.find((t) => t.key === EMPTY.template);
+        if (initial) setForm((f) => ({ ...f, params: seedDefaults(initial, f.params) }));
+      }
+    });
     if (id) api.rule(id).then((r) => { setForm(r); setYaml(r.renderedYaml || ''); });
   }, [id]);
 
@@ -27,7 +35,12 @@ export default function RuleEditor() {
 
   const onTemplateChange = (key) => {
     const t = templates.find((x) => x.key === key);
-    setForm((f) => ({ ...f, template: key, esIndex: f.esIndex || t?.defaultIndex || '' }));
+    setForm((f) => ({
+      ...f,
+      template: key,
+      esIndex: f.esIndex || t?.defaultIndex || '',
+      params: seedDefaults(t, {}),
+    }));
   };
 
   const save = async () => {
@@ -175,6 +188,19 @@ export default function RuleEditor() {
       )}
     </div>
   );
+}
+
+// Copy every field's `default` into params so values shown as UI defaults
+// actually get sent to the backend when the user hasn't manually changed them.
+function seedDefaults(tpl, current = {}) {
+  if (!tpl?.fields) return current;
+  const next = { ...current };
+  for (const fld of tpl.fields) {
+    if (fld.default !== undefined && next[fld.name] === undefined) {
+      next[fld.name] = fld.default;
+    }
+  }
+  return next;
 }
 
 function Field({ label, children }) {
