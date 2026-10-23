@@ -227,12 +227,11 @@ export const TEMPLATES = {
         ] },
       { name: 'bufferMinutes', label: '집계 시간 (분)', type: 'number', default: 5, required: true },
       { name: 'realertMinutes', label: '동일 알람 반복 방지 (분)', type: 'number', default: 15, required: false },
-      { name: 'alertText', label: 'alert_text (알림 본문)', type: 'textarea', required: false,
-        default: '⚠ *서버 메트릭 임계치 초과*\n\n📅 발생 시각: {0}\n🖥️ 호스트: {1}\n📊 지표: {2}\n📈 값: {3}' },
+      { name: 'alertText', label: 'alert_text — 알림 본문 (비워두면 메트릭 종류별 기본 포맷 사용)',
+        type: 'textarea', required: false },
       { name: 'alertTextArgs',
-        label: 'alert_text_args (쉼표 구분, "metric_value"는 실제 집계 필드로 자동 치환됨)',
-        type: 'text', required: false,
-        default: 'timestamp_kst,host.name,metric_agg_key,metric_value' },
+        label: 'alert_text_args (쉼표 구분, "metric_value"는 실제 집계 필드로 자동 치환됨, 비우면 기본 사용)',
+        type: 'text', required: false },
     ],
     build(p) {
       const MAPPING = {
@@ -240,6 +239,26 @@ export const TEMPLATES = {
         MEM:  { index: '.ds-metrics-system.memory-default-*',     field: 'system.memory.actual.used.pct' },
         DISK: { index: '.ds-metrics-system.filesystem-default-*', field: 'system.filesystem.used.pct',
                 mountField: 'system.filesystem.mount_point' },
+      };
+      // metricType별로 알림 본문/args 기본값을 바꿉니다. 사용자가 폼에서 명시적으로
+      // 입력한 값이 있으면 그것이 우선 (아래 effective 체크 참조).
+      const BODY_DEFAULTS = {
+        CPU: {
+          text: '⚠ *CPU 사용률 임계치 초과*\n\n📅 {0}\n🖥️ 호스트: {1}\n📈 값: {2}',
+          args: 'timestamp_kst,host.name,metric_value',
+        },
+        MEM: {
+          text: '⚠ *메모리 사용률 임계치 초과*\n\n📅 {0}\n🖥️ 호스트: {1}\n📈 값: {2}',
+          args: 'timestamp_kst,host.name,metric_value',
+        },
+        DISK: {
+          text: '⚠ *디스크 사용률 임계치 초과*\n\n📅 {0}\n🖥️ 호스트: {1}\n💾 마운트: {2}\n📈 값: {3}',
+          args: 'timestamp_kst,host.name,system.filesystem.mount_point,metric_value',
+        },
+        CUSTOM: {
+          text: '⚠ *서버 메트릭 임계치 초과*\n\n📅 {0}\n🖥️ 호스트: {1}\n📊 지표: {2}\n📈 값: {3}',
+          args: 'timestamp_kst,host.name,metric_agg_key,metric_value',
+        },
       };
       const type = p.metricType || 'CPU';
       const mapping = MAPPING[type];
@@ -274,23 +293,32 @@ export const TEMPLATES = {
         filter: filters,
       };
 
-      if (p.queryKey) rule.query_key = p.queryKey;
+      if (p.queryKey) {
+        // DISK: a host usually has multiple mounts (/, /data, /var/log …). A single
+        // host.name query_key would average them together and dilute spikes on one
+        // mount. Use a compound key so each (host, mount) pair is evaluated separately.
+        rule.query_key = (type === 'DISK' && p.queryKey === 'host.name')
+          ? ['host.name', mapping.mountField]
+          : p.queryKey;
+      }
       if (p.realertMinutes) rule.realert = { minutes: Number(p.realertMinutes) };
 
-      if (p.alertText) {
-        rule.alert_text_type = 'alert_text_only';
-        rule.alert_text = p.alertText;
-        if (p.alertTextArgs) {
-          rule.alert_text_args = p.alertTextArgs
-            .split(',')
-            .map((s) => s.trim())
-            .filter(Boolean)
-            // ElastAlert2's metric_aggregation emits `metric_<key>` as the actual value field.
-            // The literal token `metric_value` is a convenience alias we expand here so the
-            // default alert_text_args works regardless of the chosen metricType.
-            .map((s) => (s === 'metric_value' ? `metric_${field}` : s));
-        }
-      }
+      // Pick alert body/args: user's input wins; otherwise fall back to the
+      // metric-specific default (DISK shows mount_point, etc.).
+      const bodyDefault = BODY_DEFAULTS[type] || BODY_DEFAULTS.CUSTOM;
+      const alertText = p.alertText || bodyDefault.text;
+      const alertTextArgs = p.alertTextArgs || bodyDefault.args;
+
+      rule.alert_text_type = 'alert_text_only';
+      rule.alert_text = alertText;
+      rule.alert_text_args = alertTextArgs
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        // ElastAlert2's metric_aggregation emits `metric_<key>` as the actual value field.
+        // The literal token `metric_value` is a convenience alias we expand here so the
+        // default alert_text_args works regardless of the chosen metricType.
+        .map((s) => (s === 'metric_value' ? `metric_${field}` : s));
 
       return rule;
     },
