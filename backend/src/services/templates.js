@@ -225,6 +225,14 @@ export const TEMPLATES = {
           { value: 'host.name', label: 'host.name 별로 평가 (추천)' },
           { value: '',          label: '없음 — 전체 평균으로 평가' },
         ] },
+      { name: 'aggType', label: '집계 방식 (buffer_time 구간 내 샘플 기준)', type: 'select', required: false,
+        default: 'auto',
+        options: [
+          { value: 'auto', label: '자동 — CPU·MEM=avg, DISK=max (권장)' },
+          { value: 'avg',  label: 'avg — 구간 평균이 임계치 초과' },
+          { value: 'max',  label: 'max — 한 번이라도 임계치 초과 (스파이크 포착)' },
+          { value: 'min',  label: 'min — 구간 내내 임계치 초과 (지속 상태만)' },
+        ] },
       { name: 'metricFormat', label: '값 표시 포맷 (Python format, 예: {:.1%} → 45.7%, 비우면 원본값)',
         type: 'text', required: false, default: '{:.1%}' },
       { name: 'bufferMinutes', label: '집계 시간 (분)', type: 'number', default: 5, required: true },
@@ -266,6 +274,9 @@ export const TEMPLATES = {
       const mapping = MAPPING[type];
       const index = mapping ? mapping.index : (p.customIndex || '.ds-metrics-*');
       const field = mapping ? mapping.field : (p.customField || 'system.cpu.total.norm.pct');
+      const aggType = ['avg', 'max', 'min'].includes(p.aggType)
+        ? p.aggType
+        : (type === 'DISK' ? 'max' : 'avg');
 
       const filters = [];
       if (p.host) {
@@ -288,7 +299,7 @@ export const TEMPLATES = {
         index,
         type: 'metric_aggregation',
         metric_agg_key: field,
-        metric_agg_type: 'avg',
+        metric_agg_type: aggType,
         buffer_time: { minutes: Number(p.bufferMinutes ?? 5) },
         max_threshold: Number(p.threshold ?? 0.9),
         match_enhancements: ['kst_enhancer.KSTEnhancement'],
@@ -307,7 +318,7 @@ export const TEMPLATES = {
 
       // ElastAlert2 writes the formatted value to `metric_<key>_<type>_formatted`.
       if (p.metricFormat) rule.metric_format_string = p.metricFormat;
-      const valueField = `metric_${field}_avg${p.metricFormat ? '_formatted' : ''}`;
+      const valueField = `metric_${field}_${aggType}${p.metricFormat ? '_formatted' : ''}`;
 
       // Pick alert body/args: user's input wins; otherwise fall back to the
       // metric-specific default (DISK shows mount_point, etc.).
@@ -322,7 +333,7 @@ export const TEMPLATES = {
         .map((s) => s.trim())
         .filter(Boolean)
         // ElastAlert2's metric_aggregation stores the aggregated value under
-        // `metric_<metric_agg_key>_<metric_agg_type>` (we always use `avg`).
+        // `metric_<metric_agg_key>_<metric_agg_type>`.
         // The literal token `metric_value` is a convenience alias we expand
         // here so the default alert_text_args works for any metricType.
         .map((s) => (s === 'metric_value' ? valueField : s));
