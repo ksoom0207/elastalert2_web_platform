@@ -208,9 +208,13 @@ export const TEMPLATES = {
         default: '.ds-metrics-*', showWhen: { field: 'metricType', values: ['CUSTOM'] } },
       { name: 'customField', label: '메트릭 필드 (직접)', type: 'text', required: true,
         default: 'system.cpu.total.norm.pct', showWhen: { field: 'metricType', values: ['CUSTOM'] } },
-      // Shown only for DISK — ES `regexp` query (Lucene syntax, no lookaheads).
-      { name: 'diskMountRegex', label: '마운트 포인트 regex (빈값=전체)', type: 'text', required: false,
-        default: '/(root|data|var|home|opt)(/.*)?',
+      // Shown only for DISK.
+      { name: 'diskExcludeFsTypes', label: '제외할 파일시스템 타입 (쉼표 구분, 빈값=제외 안 함)', type: 'text',
+        required: false, default: 'tmpfs,devtmpfs,overlay,squashfs,nsfs',
+        showWhen: { field: 'metricType', values: ['DISK'] } },
+      // ES `regexp` query (Lucene syntax, no lookaheads). Root mount is "/" itself.
+      { name: 'diskMountRegex', label: '마운트 포인트 regex (빈값=전체, 예: /|/data(/.*)?)', type: 'text',
+        required: false, default: '',
         showWhen: { field: 'metricType', values: ['DISK'] } },
       { name: 'threshold', label: '임계치 (0~1, 초과 시 알람)', type: 'number', default: 0.9, required: true },
       { name: 'host', label: 'host.name 필터값 (예: "ofs-" 또는 "web-01", 빈값=전체)', type: 'text', required: false },
@@ -290,8 +294,14 @@ export const TEMPLATES = {
           filters.push({ prefix: { 'host.name': p.host.replace(/\*+$/, '') } });
         }
       }
-      if (type === 'DISK' && p.diskMountRegex) {
-        filters.push({ regexp: { [mapping.mountField]: p.diskMountRegex } });
+      if (type === 'DISK') {
+        const fsTypes = (p.diskExcludeFsTypes || '').split(',').map((s) => s.trim()).filter(Boolean);
+        if (fsTypes.length > 0) {
+          filters.push({ bool: { must_not: [{ terms: { 'system.filesystem.type': fsTypes } }] } });
+        }
+        if (p.diskMountRegex) {
+          filters.push({ regexp: { [mapping.mountField]: p.diskMountRegex } });
+        }
       }
 
       const rule = {
@@ -302,7 +312,8 @@ export const TEMPLATES = {
         metric_agg_type: aggType,
         buffer_time: { minutes: Number(p.bufferMinutes ?? 5) },
         max_threshold: Number(p.threshold ?? 0.9),
-        match_enhancements: ['kst_enhancer.KSTEnhancement'],
+        // MetricFormatEnhancement fills value fields ElastAlert2 omits with a compound query_key.
+        match_enhancements: ['kst_enhancer.KSTEnhancement', 'metric_enhancer.MetricFormatEnhancement'],
         filter: filters,
       };
 
