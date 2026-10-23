@@ -315,10 +315,11 @@ export const TEMPLATES = {
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
-        // ElastAlert2's metric_aggregation emits `metric_<key>` as the actual value field.
-        // The literal token `metric_value` is a convenience alias we expand here so the
-        // default alert_text_args works regardless of the chosen metricType.
-        .map((s) => (s === 'metric_value' ? `metric_${field}` : s));
+        // ElastAlert2's metric_aggregation stores the aggregated value under
+        // `metric_<metric_agg_key>_<metric_agg_type>` (we always use `avg`).
+        // The literal token `metric_value` is a convenience alias we expand
+        // here so the default alert_text_args works for any metricType.
+        .map((s) => (s === 'metric_value' ? `metric_${field}_avg` : s));
 
       return rule;
     },
