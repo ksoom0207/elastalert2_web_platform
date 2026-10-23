@@ -191,16 +191,16 @@ export const TEMPLATES = {
     key: 'SERVER_METRIC',
     label: '서버 메트릭 한계치 알람',
     description: '지정 메트릭이 임계치를 초과하면 알림 (metric_aggregation)',
-    // Template overrides the top-level Index pattern with per-metric-type mapping below,
-    // so the frontend hides its esIndex input for this template.
+    // The template picks the index per metric type below, so the frontend hides its
+    // top-level Index pattern input for this template.
     overridesIndex: true,
     defaultIndex: '.ds-metrics-system.cpu-default-*',
     fields: [
       { name: 'metricType', label: '메트릭 종류', type: 'select', required: true, default: 'CPU',
         options: [
-          { value: 'CPU', label: 'CPU 사용률' },
-          { value: 'MEM', label: '메모리 사용률' },
-          { value: 'DISK', label: '디스크 사용률' },
+          { value: 'CPU',    label: 'CPU 사용률' },
+          { value: 'MEM',    label: '메모리 사용률' },
+          { value: 'DISK',   label: '디스크 사용률' },
           { value: 'CUSTOM', label: '기타 (직접 입력)' },
         ] },
       // Shown only for CUSTOM
@@ -213,13 +213,27 @@ export const TEMPLATES = {
         default: '/(root|data|var|home|opt)(/.*)?',
         showWhen: { field: 'metricType', values: ['DISK'] } },
       { name: 'threshold', label: '임계치 (0~1, 초과 시 알람)', type: 'number', default: 0.9, required: true },
-      { name: 'host', label: 'host.name (선택, 특정 호스트만)', type: 'text', required: false },
+      { name: 'host', label: 'host.name 필터값 (예: "ofs-" 또는 "web-01", 빈값=전체)', type: 'text', required: false },
+      { name: 'hostMatch', label: 'host 매칭 방식', type: 'select', required: false, default: 'prefix',
+        options: [
+          { value: 'prefix',   label: 'prefix — 앞부분 일치 (예: "ofs-" → ofs-01, ofs-02...)' },
+          { value: 'exact',    label: 'exact — 정확히 일치' },
+          { value: 'wildcard', label: 'wildcard — * 와일드카드 사용 (예: "*-prod")' },
+        ] },
+      { name: 'queryKey', label: 'query_key (호스트별 개별 평가)', type: 'select', required: false, default: 'host.name',
+        options: [
+          { value: 'host.name', label: 'host.name 별로 평가 (추천)' },
+          { value: '',          label: '없음 — 전체 평균으로 평가' },
+        ] },
+      { name: 'metricFormat', label: '값 표시 포맷 (Python format, 예: {:.1%} → 45.7%, 비우면 원본값)',
+        type: 'text', required: false, default: '{:.1%}' },
       { name: 'bufferMinutes', label: '집계 시간 (분)', type: 'number', default: 5, required: true },
       { name: 'realertMinutes', label: '동일 알람 반복 방지 (분)', type: 'number', default: 15, required: false },
-      { name: 'alertText', label: 'alert_text (알림 본문)', type: 'textarea', required: false,
-        default: '⚠ *서버 메트릭 임계치 초과*\n\n📅 발생 시각: {0}\n🖥️ 호스트: {1}\n📊 지표: {2}\n📈 값: {3}' },
-      { name: 'alertTextArgs', label: 'alert_text_args (쉼표 구분)', type: 'text', required: false,
-        default: 'timestamp_kst,host.name,metric_agg_key,metric_agg_value' },
+      { name: 'alertText', label: 'alert_text — 알림 본문 (비워두면 메트릭 종류별 기본 포맷 사용)',
+        type: 'textarea', required: false },
+      { name: 'alertTextArgs',
+        label: 'alert_text_args (쉼표 구분, "metric_value"는 실제 집계 필드로 자동 치환됨, 비우면 기본 사용)',
+        type: 'text', required: false },
     ],
     build(p) {
       const MAPPING = {
@@ -228,13 +242,43 @@ export const TEMPLATES = {
         DISK: { index: '.ds-metrics-system.filesystem-default-*', field: 'system.filesystem.used.pct',
                 mountField: 'system.filesystem.mount_point' },
       };
+      // metricType별로 알림 본문/args 기본값을 바꿉니다. 사용자가 폼에서 명시적으로
+      // 입력한 값이 있으면 그것이 우선 (아래 effective 체크 참조).
+      const BODY_DEFAULTS = {
+        CPU: {
+          text: '⚠ *CPU 사용률 임계치 초과*\n\n📅 {0}\n🖥️ 호스트: {1}\n📈 값: {2}',
+          args: 'timestamp_kst,host.name,metric_value',
+        },
+        MEM: {
+          text: '⚠ *메모리 사용률 임계치 초과*\n\n📅 {0}\n🖥️ 호스트: {1}\n📈 값: {2}',
+          args: 'timestamp_kst,host.name,metric_value',
+        },
+        DISK: {
+          text: '⚠ *디스크 사용률 임계치 초과*\n\n📅 {0}\n🖥️ 호스트: {1}\n💾 마운트: {2}\n📈 값: {3}',
+          args: 'timestamp_kst,host.name,system.filesystem.mount_point,metric_value',
+        },
+        CUSTOM: {
+          text: '⚠ *서버 메트릭 임계치 초과*\n\n📅 {0}\n🖥️ 호스트: {1}\n📊 지표: {2}\n📈 값: {3}',
+          args: 'timestamp_kst,host.name,metric_agg_key,metric_value',
+        },
+      };
       const type = p.metricType || 'CPU';
       const mapping = MAPPING[type];
       const index = mapping ? mapping.index : (p.customIndex || '.ds-metrics-*');
       const field = mapping ? mapping.field : (p.customField || 'system.cpu.total.norm.pct');
 
       const filters = [];
-      if (p.host) filters.push({ term: { 'host.name': p.host } });
+      if (p.host) {
+        const match = p.hostMatch || 'prefix';
+        if (match === 'exact') {
+          filters.push({ term: { 'host.name': p.host } });
+        } else if (match === 'wildcard') {
+          filters.push({ wildcard: { 'host.name': p.host } });
+        } else {
+          // prefix (default). Strip a trailing '*' if the user wrote 'ofs-*' by habit.
+          filters.push({ prefix: { 'host.name': p.host.replace(/\*+$/, '') } });
+        }
+      }
       if (type === 'DISK' && p.diskMountRegex) {
         filters.push({ regexp: { [mapping.mountField]: p.diskMountRegex } });
       }
@@ -251,15 +295,37 @@ export const TEMPLATES = {
         filter: filters,
       };
 
+      if (p.queryKey) {
+        // DISK: a host usually has multiple mounts (/, /data, /var/log …). A single
+        // host.name query_key would average them together and dilute spikes on one
+        // mount. Use a compound key so each (host, mount) pair is evaluated separately.
+        rule.query_key = (type === 'DISK' && p.queryKey === 'host.name')
+          ? ['host.name', mapping.mountField]
+          : p.queryKey;
+      }
       if (p.realertMinutes) rule.realert = { minutes: Number(p.realertMinutes) };
 
-      if (p.alertText) {
-        rule.alert_text_type = 'alert_text_only';
-        rule.alert_text = p.alertText;
-        if (p.alertTextArgs) {
-          rule.alert_text_args = p.alertTextArgs.split(',').map((s) => s.trim()).filter(Boolean);
-        }
-      }
+      // ElastAlert2 writes the formatted value to `metric_<key>_<type>_formatted`.
+      if (p.metricFormat) rule.metric_format_string = p.metricFormat;
+      const valueField = `metric_${field}_avg${p.metricFormat ? '_formatted' : ''}`;
+
+      // Pick alert body/args: user's input wins; otherwise fall back to the
+      // metric-specific default (DISK shows mount_point, etc.).
+      const bodyDefault = BODY_DEFAULTS[type] || BODY_DEFAULTS.CUSTOM;
+      const alertText = p.alertText || bodyDefault.text;
+      const alertTextArgs = p.alertTextArgs || bodyDefault.args;
+
+      rule.alert_text_type = 'alert_text_only';
+      rule.alert_text = alertText;
+      rule.alert_text_args = alertTextArgs
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)
+        // ElastAlert2's metric_aggregation stores the aggregated value under
+        // `metric_<metric_agg_key>_<metric_agg_type>` (we always use `avg`).
+        // The literal token `metric_value` is a convenience alias we expand
+        // here so the default alert_text_args works for any metricType.
+        .map((s) => (s === 'metric_value' ? valueField : s));
 
       return rule;
     },
